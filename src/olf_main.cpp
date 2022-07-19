@@ -561,16 +561,11 @@ void debugPrint()
 // Subscribe to application specific topics
 void appMQTTTopicSubscribe()
 {
-
-    // mqttTopicsubscribe(oh3StateValue, 2);
-    		//mqttTopicsubscribe(oh3CommandTOD, 2);
 			mqttTopicsubscribe(oh3CmdStateWD, 2);
 			mqttTopicsubscribe(oh3CmdStateWE, 2);
 			mqttTopicsubscribe(oh3CommandWDTimes, 2);
 			mqttTopicsubscribe(oh3CommandWETimes, 2);
-			//mqttTopicsubscribe(oh3CommandIOT, 2);
-			mqttTopicsubscribe(oh3CommandTrigger, 2);
-    
+			mqttTopicsubscribe(oh3CommandTrigger, 2); 
 }
 
 //************************************
@@ -611,7 +606,7 @@ void telnet_extension_1(char c)
     else if (RunModeWD == ONMODE)
         rmWD ="ONMODE";
     else if (RunModeWD == OFFMODE)
-        rmWD ="ONMODE";  
+        rmWD ="OFFMODE";  
     else   
         rmWD = "UNKNOWN";
 
@@ -629,15 +624,15 @@ void telnet_extension_1(char c)
     // Print out on Telnet terminal
     char logString[MAX_LOGSTRING_LENGTH];
     //memset(logString, 0, sizeof logString);
-    sprintf(logString, "%s%s\n\r", "Week Day:\t", wd.c_str());
+    sprintf(logString, "%s%s\r", "Week Day:\t", wd.c_str());
     printTelnet((String)logString);
-    sprintf(logString, "%s%s\n\r", "WD Times:\t", stringOfTimesWD);
+    sprintf(logString, "%s%s\r", "WD Times:\t", stringOfTimesWD);
     printTelnet((String)logString);
-    sprintf(logString, "%s%s\n\r", "WE Times:\t", stringOfTimesWE);
+    sprintf(logString, "%s%s\r", "WE Times:\t", stringOfTimesWE);
     printTelnet((String)logString);
-    sprintf(logString, "%s%s\n\r", "WD Run Mode:\t", rmWD.c_str());
+    sprintf(logString, "%s%s\r", "WD Run Mode:\t", rmWD.c_str());
     printTelnet((String)logString);
-    sprintf(logString, "%s%s\n\r", "WE Run Mode:\t", rmWE.c_str());
+    sprintf(logString, "%s%s\r", "WE Run Mode:\t", rmWE.c_str());
     printTelnet((String)logString);
 }
 
