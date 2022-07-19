@@ -100,9 +100,9 @@ const char *oh3StateManual      = "/house/cntrl/outside-lights-front/manual-stat
 const char *oh3CommandTrigger   = "/house/cntrl/outside-lights-front/pir-command";	    // Event fron the PIR detector (front porch: PIRON or PIROFF
 
 
-int lcntrlTimes[6];																// contains ON and OFF time for the 3 zone periods for upstairs heat request
+int lcntrlTimesWD[6];																// contains ON and OFF time for the 3 zone periods for upstairs heat request
 int lcntrlTimesWE[6];															// contains ON and OFF time for the 3 zone periods for downstairs heat request
-char cntrlTimes[6][10]{"00:00", "01:00", "02:00", "03:00", "04:00", "06:00"};	// 22/1/2019 how big is each array element? 6 elements each element 10 characters long (9 + 1 for /0)
+char cntrlTimesWD[6][10]{"00:00", "01:00", "02:00", "03:00", "04:00", "06:00"};	// 22/1/2019 how big is each array element? 6 elements each element 10 characters long (9 + 1 for /0)
 char cntrlTimesWE[6][10]{"00:00", "01:00", "02:00", "03:00", "04:00", "06:00"}; // 22/1/2019
 
 //************************
@@ -199,7 +199,7 @@ bool onMqttMessageExt(char *topic, char *payload, const AsyncMqttClientMessagePr
 	 ****************************************************/
 	if (strcmp(topic, oh3CommandWDTimes) == 0)
 	{
-		processCrtlTimes(mqtt_payload, cntrlTimes, lcntrlTimes);
+		processCrtlTimes(mqtt_payload, cntrlTimesWD, lcntrlTimesWD);
 		TimesReceivedWD = true;
         return true;
 	}
@@ -229,7 +229,7 @@ bool onMqttMessageExt(char *topic, char *payload, const AsyncMqttClientMessagePr
 		//StateReceivedWD = true;
 		if (weekDay == true)
 		{
-			if (processCntrlMessage(mqtt_payload, "ON", "OFF", oh3CmdStateWD, 0, &SBWD, &RunModeWD, cntrlTimes, &ZoneWD) == true)
+			if (processCntrlMessage(mqtt_payload, "ON", "OFF", oh3CmdStateWD, 0, &SBWD, &RunModeWD, cntrlTimesWD, &ZoneWD) == true)
 			{
 				Serial.print("ERROR: Unknown message - ");
 				Serial.print(mqtt_payload);
@@ -335,7 +335,7 @@ bool processCntrlMessage(char *mqttMessage,
 	{
 		mqttClient.publish(oh3StateManual,1, true, "AUTO");
 
-		Serial.println("processHtgCntrlMessage: SET received.");
+		Serial.println("processOLFCntrlMessage: SET received.");
 
 		// IF I've pressed SET then check the ON Close time and sent the appropriate message
 		*rm = AUTOMODE;
@@ -455,7 +455,7 @@ bool onORoff()
 			// mqttLog(logString,true);
 			if (weekDay == true)
 			{
-				if (ohTimenow >= lcntrlTimes[i] && ohTimenow < lcntrlTimes[i + 1])
+				if (ohTimenow >= lcntrlTimesWD[i] && ohTimenow < lcntrlTimesWD[i + 1])
 				{
 					state = true; // Switch ON
 					ZoneWD = i;	  // Update which zone we are in (there maybe overlapping time zones)
@@ -588,6 +588,57 @@ void telnet_extension_1(char c)
     //memset(logString, 0, sizeof logString);
     //sprintf(logString, "%s%d\n\r", "Sensor Value:\t", sensorValue);
     //printTelnet((String)logString);
+
+   
+    String wd;
+    String rmWD, rmWE;
+    char stringOfTimesWD [70];
+    char stringOfTimesWE [70];
+    // get weekday  
+    wd = "Week Day";
+    if (weekDay == false)
+        wd = "Weekend";
+
+    // Get on, off times
+    sprintf(stringOfTimesWD,"%s,%s,%s,%s,%s,%s",  cntrlTimesWD[0],cntrlTimesWD[1],cntrlTimesWD[2],cntrlTimesWD[3],cntrlTimesWD[4],cntrlTimesWD[5] );
+    sprintf(stringOfTimesWE,"%s,%s,%s,%s,%s,%s",  cntrlTimesWE[0],cntrlTimesWE[1],cntrlTimesWE[2],cntrlTimesWE[3],cntrlTimesWE[4],cntrlTimesWE[5] );
+
+    // get Run Mode
+    if (RunModeWD == AUTOMODE)
+        rmWD ="AUTOMODE";
+    else if (RunModeWD == NEXTMODE)
+        rmWD ="NEXTMODE";
+    else if (RunModeWD == ONMODE)
+        rmWD ="ONMODE";
+    else if (RunModeWD == OFFMODE)
+        rmWD ="ONMODE";  
+    else   
+        rmWD = "UNKNOWN";
+
+    if (RunModeWE == AUTOMODE)
+        rmWE ="AUTOMODE";
+    else if (RunModeWE == NEXTMODE)
+        rmWE ="NEXTMODDE";
+    else if (RunModeWE == ONMODE)
+        rmWE ="ONMODE";
+    else if (RunModeWE == OFFMODE)
+        rmWE ="ONMODE";  
+    else   
+        rmWE = "UNKNOWN";
+
+    // Print out on Telnet terminal
+    char logString[MAX_LOGSTRING_LENGTH];
+    //memset(logString, 0, sizeof logString);
+    sprintf(logString, "%s%s\n\r", "Week Day:\t", wd.c_str());
+    printTelnet((String)logString);
+    sprintf(logString, "%s%s\n\r", "WD Times:\t", stringOfTimesWD);
+    printTelnet((String)logString);
+    sprintf(logString, "%s%s\n\r", "WE Times:\t", stringOfTimesWE);
+    printTelnet((String)logString);
+    sprintf(logString, "%s%s\n\r", "WD Run Mode:\t", rmWD.c_str());
+    printTelnet((String)logString);
+    sprintf(logString, "%s%s\n\r", "WE Run Mode:\t", rmWE.c_str());
+    printTelnet((String)logString);
 }
 
 // Process any application specific telnet commannds
