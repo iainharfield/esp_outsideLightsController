@@ -1,4 +1,5 @@
 #include "defines.h"
+
 #include <AsyncMqttClient_Generic.hpp>
 
 void startCntrl();
@@ -22,10 +23,14 @@ extern char ntptod[MAX_CFGSTR_LENGTH];
 extern AsyncMqttClient mqttClient;
 extern void mqttTopicsubscribe(const char *topic, int qos);
 extern templateServices coreServices;
+//
+// Application User exits
+//
+extern bool processCntrlMessageApp_Ext(char *, const char *, const char *, const char *);
 
 
 extern int ohTimenow;
-extern int ohTODReceived;
+extern bool ohTODReceived;
 
 // defined in telnet.cpp
 extern int reporting;
@@ -80,8 +85,8 @@ const char *oh3StateRuntime = "/house/cntrl/outside-lights-front/runtime-state";
 const char *oh3CmdStateWD       = "/house/cntrl/outside-lights-front/wd-command";	  // UI Button press
 const char *oh3CmdStateWE       = "/house/cntrl/outside-lights-front/we-command";     // UI Button press
 
-cntrlState cntrlStateWD(AUTOMODE, SBUNKOWN, ZONEGAP, false);
-cntrlState cntrlStateWE(AUTOMODE, SBUNKOWN, ZONEGAP, false);
+cntrlState cntrlStateWD(AUTOMODE, SBUNKOWN, ZONEGAP);
+cntrlState cntrlStateWE(AUTOMODE, SBUNKOWN, ZONEGAP);
 
 void startCntrl()
 {
@@ -90,7 +95,6 @@ void startCntrl()
 	sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Starting Controlle");
 	mqttLog(logString, true, true);
 	
-
 }
 
 //***********************************************************************************
@@ -167,10 +171,7 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	 ****************************************************/
 	if (strcmp(topic, oh3CommandWDTimes) == 0)
 	{
-		if (reporting == REPORT_DEBUG)
-	{
-		mqttLog("WD Control times received" , true, true);
-	}
+		mqttLog("WD Control times Received", true, true);
 		processCrtlTimes(mqtt_payload, cntrlTimesWD, lcntrlTimesWD);
 		TimesReceivedWD = true;
 		return true;
@@ -181,6 +182,7 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	 ****************************************************/
 	else if (strcmp(topic, oh3CommandWETimes) == 0)
 	{
+		mqttLog("WE Control times Received", true, true);
 		processCrtlTimes(mqtt_payload, cntrlTimesWE, lcntrlTimesWE);
 		TimesReceivedWE = true;
 		return true;
@@ -245,7 +247,7 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 {
 	if (strcmp(mqttMessage, "ON") == 0)
 	{
-		// *rm = ONMODE;
+		
 		if (coreServices.getWeekDayState() == true)
 		{
 			cntrlStateWD.setRunMode(ONMODE);
@@ -306,15 +308,13 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 	}
 	else if (strcmp(mqttMessage, "SET") == 0)
 	{
-		//mqttClient.publish(oh3StateManual,1, true, "AUTO");			// FIXTHIS what it MAN state
-
-		Serial.println("processOLFCntrlMessage: SET received.");
-
-		// IF I've pressed SET then check the ON Close time and sent the appropriate message
 		
-		cntrlStateWE.setRunMode(AUTOMODE);
+		mqttLog("processOLFCntrlMessage: SET received.", true, true);
+
+		// IF pressed SET then check the ON Close time and sent the appropriate message
 		if (coreServices.getWeekDayState() == true)
 		{
+			cntrlStateWD.setRunMode(AUTOMODE);
 			if (onORoff() == true)
 			{
 				mqttClient.publish(oh3StateRuntime,1, true, "ON");		// FIXTHIS WD or WE
@@ -328,6 +328,7 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 		}
 		else
 		{
+			cntrlStateWE.setRunMode(AUTOMODE);
 			if (onORoff() == true)
 			{
 				mqttClient.publish(oh3StateRuntime,1, true, "ON");		// FIXTHIS WD or WE
@@ -342,9 +343,10 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 	}
 	else
 	{
+		processCntrlMessageApp_Ext(mqttMessage, onMessage, offMessage, commandTopic);
 		return true;
 	}
-
+	processCntrlMessageApp_Ext(mqttMessage, onMessage, offMessage, commandTopic);
 	return false;
 }
 
@@ -365,8 +367,10 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
  ************************************************************************/
 bool onORoff()
 {
-	// Serial.println("onORoff");
+
+	//char logString[MAX_LOGSTRING_LENGTH]; 
 	// debugPrint();
+	mqttLog("processOLFCntrlMessage: onORoff checking", true, true);
 
 	if (coreServices.getWeekDayState() == true)
 		cntrlStateWD.setZone(ZONEGAP); // not in a zone
@@ -380,16 +384,10 @@ bool onORoff()
 		/****************************************************************
 		 * Work out from the array of longs if the control is On or OFF
 		 ****************************************************************/
-		// i = 0;
 		Serial.print("PS ZONE CONFIG: ");
 
 		for (int i = 0, j = 0; i < 6; i++, j++)
 		{
-			if (i == 0)
-			{
-				Serial.print("TOD: ");
-				Serial.print((int)ohTimenow);
-			}
 			// Serial.print (", Zone: ");
 			// Serial.print ((int) i - j);
 			// Serial.print ("[");
@@ -397,9 +395,12 @@ bool onORoff()
 			// Serial.print (",");
 			// Serial.print ( lcntrlTimes[i+1]);
 			// Serial.print ("] ");
-			// memset(logString,0, sizeof logString);
-			// sprintf(logString, "%s,%s,%s,%s[%i: %i: %i]", ntptod, sensorType, sensorName, "ohTimenow: ", ohTimenow, lcntrlTimes[i], lcntrlTimesWE[i] );
-			// mqttLog(logString,true);
+			
+		
+			//memset(logString,0, sizeof logString);
+			//sprintf(logString, "%s,%s,%s,%s[%i: %i: %i]", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "ohTimenow: ", ohTimenow, lcntrlTimesWD[i], lcntrlTimesWE[i]);
+			//mqttLog(logString,true, true);
+
 			if (coreServices.getWeekDayState() == true)
 			{
 				if (ohTimenow >= lcntrlTimesWD[i] && ohTimenow < lcntrlTimesWD[i + 1])
@@ -418,19 +419,21 @@ bool onORoff()
 					break;
 				}
 			}
-
 			i++;
 		}
 
 		if (state == true)
 		{
-			// mqttLog("onORoff returns  - ON", true);
-			Serial.println(" and set to ON");
+			//FIXTHIS
+			//mqttLog("onORoff returns  - ON", true, true);
+			//Serial.println(" and set to ON");
 		}
 		else
 		{
-			// mqttLog("onORoff returns  - OFF", true);
-			Serial.println(" In between zones so set to OFF unless NEXT override");
+			// FIXTHIS
+
+			//mqttLog("onORoff returns  - OFF", true, true);
+			//Serial.println(" In between zones so set to OFF unless NEXT override");
 			// mqttLog("In between zones so set to OFF unless NEXT. If in NEXT then don't switch OFF - wait for next zone to switch OFF", true);
 		}
 	}
@@ -445,10 +448,20 @@ bool readyCheck()
 {
 	if (ohTODReceived == true && TimesReceivedWD == true && TimesReceivedWE == true)
 	{
+		//mqttLog("readyCheck = true", true, true);
 		return true;
 	}
 	else
 	{
+		//mqttLog("readyCheck = false...", true, true);
+
+		//if (ohTODReceived == false)
+		//	mqttLog("TOD not received", true, true);
+		//if (TimesReceivedWD == false)
+		//	mqttLog("WD Contol times not received", true, true);
+		//if (TimesReceivedWE == false)
+		//	mqttLog("WE Contol times not received", true, true);
+
 		return false;
 	}
 }
@@ -625,7 +638,7 @@ void processCntrlTOD_Ext()
 {
 
 	// Check all WD and WE times have been received before doing anything
-	mqttLog("OLF Contoller Processing TOD", false, true);
+	mqttLog("OLF Contoller Processing TOD", true, true);
 
 	char logString[MAX_LOGSTRING_LENGTH];
 

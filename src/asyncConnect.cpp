@@ -80,7 +80,6 @@ Ticker wifiReconnectTimer;
 Ticker todUpdateTimer;
 Ticker processTOD;
 
-
 AsyncMqttClient mqttClient;
 char mqttClientID[MAX_CFGSTR_LENGTH];
 char willTopic[MAX_CFGSTR_LENGTH];
@@ -96,8 +95,8 @@ bool ntpTODReceived = false;
 bool ohTODReceived = false;
 
 int dayNum = -1; // 0=Sun 1=Mon, 2=Tue 3=Wed, 4=Thu 5=Fri, 6=Sat
-//bool weekDay = true;
-int ohTimenow = 0;
+// bool weekDay = true;
+int ohTimenow = 0;   //1234 mans 12:34
 
 // wifi server config
 // Set up LittleFS
@@ -118,11 +117,7 @@ String Router_Pass;
 
 char ipAddr[MAX_CFGSTR_LENGTH];
 
-templateServices coreServices(false);  // initialise
-
-//String lowerDeviceType = espDevice.getName();
-//lowerDeviceType = lowerDeviceType.toLowerCase();
-//String oh3CommandIdentity = "/house/" + lowerDeviceType + "/" + deviceName + "/identity";
+templateServices coreServices(false); // initialise
 
 void platform_setup(bool configWiFi)
 {
@@ -248,7 +243,12 @@ void connectToMqtt()
   Serial.println("Connecting to MQTT...");
 
   memset(willTopic, 0, sizeof willTopic);
-  sprintf(willTopic, "/house/ldr/%s/lwt", deviceName.c_str());
+  String dt = espDevice.getType();
+  String dn = espDevice.getName();
+  dt.toLowerCase(); // needs to be lower case for MQTT topic name
+  dn.toLowerCase();
+
+  sprintf(willTopic, "/house/%s/%s/lwt", dt.c_str(),dn.c_str());
 
   memset(mqttClientID, 0, sizeof mqttClientID);
   sprintf(mqttClientID, "%s:%s", deviceName.c_str(), WiFi.macAddress().c_str());
@@ -301,17 +301,16 @@ void printSeparationLine()
 
 void onMqttConnect(bool sessionPresent)
 {
-  Serial.print("Connected to MQTT broker: ");
-  Serial.print(mqttBrokerIPAddr);
-  Serial.print(", port: ");
-  Serial.println(mqttBrokerPort);
+  mqttLog("MQTT Connected.", true, true);
+  // printTelnet("connected to MQTT");
+  //Serial.print("Connected to MQTT broker: ");
+  //Serial.print(mqttBrokerIPAddr);
+  //Serial.print(", port: ");
+  //Serial.println(mqttBrokerPort);
 
   // Serial.print("Session present: "); Serial.println(sessionPresent);
-
+mqttLog(willTopic, true, true);
   mqttClient.publish(willTopic, 1, true, "online");
-
-  mqttLog("MQTT Connected.", true, true);
-  //printTelnet("connected to MQTT");
 
   // Subscribe to Managment topics
   packetIdSub = mqttClient.subscribe(oh3CommandIOT, 2);
@@ -325,9 +324,6 @@ void onMqttConnect(bool sessionPresent)
 
   cntrlMQTTTopicSubscribe();
   appMQTTTopicSubscribe();
-
-  
-
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
@@ -335,7 +331,7 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
   (void)reason;
 
   Serial.println("Disconnected from MQTT.");
-  //printTelnet("Disconnected from MQTT");
+  // printTelnet("Disconnected from MQTT");
 
   if (WiFi.isConnected())
   {
@@ -368,6 +364,7 @@ void onMqttPublish(const uint16_t &packetId)
 
 void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessageProperties &properties, const size_t &len, const size_t &index, const size_t &total)
 {
+
   char logString[MAX_LOGSTRING_LENGTH];
   char iotCmd[10][21]; // 10 strings each 20 chars long
   long timeNow[4];     // Contains Current time of day [HH],[MM]
@@ -405,13 +402,6 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
       Serial.println(mqtt_payload);
       */
 
-  //****************************
-  // Implement application MQTT
-  //****************************
-  if (onMqttMessageCntrlExt(topic, payload, properties, len, index, total) == false)
-  {
-    onMqttMessageAppExt(topic, payload, properties, len, index, total);
-  }
   /******************************************
    * Time of day event
    *     Process in times
@@ -423,7 +413,6 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
     dayNum = get_weekday(mqtt_payload);
     coreServices.setDayNumber(dayNum);
 
-
     int day, year, month, hr, min, sec;
     sscanf(mqtt_payload, "%d-%d-%dT%d:%d:%d", &year, &month, &day, &hr, &min, &sec);
     timeNow[0] = hr;
@@ -432,10 +421,8 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
 
     ohTODReceived = true;
 
-
-    //Notify Controller and Application that TOD has been received
+    // Notify Controller and Application that TOD has been received
     processTOD.once(2, processCntrlTOD_Ext);
-
   }
   else if (strcmp(topic, oh3CommandIOT) == 0)
   {
@@ -462,7 +449,7 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
     {
       String dt = espDevice.getType();
       String dn = espDevice.getName();
-      dt.toLowerCase(); //needs to be lower case for MQTT topic name
+      dt.toLowerCase(); // needs to be lower case for MQTT topic name
       dn.toLowerCase();
       String oh3CommandIdentity = "/house/" + dt + "/" + dn + "/identity";
 
@@ -473,7 +460,6 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
       memset(logString, 0, sizeof logString);
       sprintf(logString, "%s,%s,%s,%s,%s", iotBoard, deviceType.c_str(), deviceName.c_str(), WiFi.localIP().toString().c_str(), Router_SSID.c_str());
       mqttClient.publish(oh3CommandIdentity.c_str(), 1, true, logString);
-      
     }
     if (strcmp(iotCmd[0], "IOT-RESET") == 0) //
     {
@@ -487,12 +473,17 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
       }
     }
   }
-
-  else
+  //****************************
+  // Implement contoller and Application MQTT   FIXTHIS - shit logic
+  //****************************
+  if (onMqttMessageCntrlExt(topic, payload, properties, len, index, total) == false)
   {
-    memset(logString, 0, sizeof logString);
-    sprintf(logString, "%s%s %s", "Unknown message received: ", topic, mqtt_payload);
-    mqttLog(logString, true, true);
+        if (onMqttMessageAppExt(topic, payload, properties, len, index, total) == false)
+        {
+            memset(logString, 0, sizeof logString);
+            sprintf(logString, "%s%s %s", "Template: Unknown message received: ", topic, mqtt_payload);
+            mqttLog(logString, true, true);
+        }    
   }
 }
 
@@ -509,7 +500,6 @@ void todNTPUpdate()
     }
     // todUpdateTimer.detach();  // TOD updated so stop looking
     ntpTODReceived = true;
-
   }
 }
 

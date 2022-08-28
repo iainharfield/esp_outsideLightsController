@@ -80,23 +80,21 @@ class cntrlState
   int runMode;
   int switchBack;
   int zone;
-  bool weekDay;
 
 public:
   cntrlState() {}
-  cntrlState(int rm, int sb, int zn, bool wd)
+  cntrlState(int rm, int sb, int zn)
   {
     runMode = rm;
     switchBack = sb;
     zone = zn;
-    weekDay = wd;
   }
-  void setup(int rm, int sb, int zn, bool wd)
+  void setup(int rm, int sb, int zn)
   {
     runMode = rm;
     switchBack = sb;
     zone = zn;
-    weekDay = wd;
+
   }
   int getRunMode()
   {
@@ -122,14 +120,8 @@ public:
   {
     zone = zn;
   }
-  void setWeekDay(bool bValue)
-  {
-    weekDay = bValue;
-  }
-  bool getWeekDay()
-  {
-    return weekDay;
-  }
+
+
 };
 
 
@@ -137,6 +129,7 @@ class templateServices
 {
   bool weekDay = false; // initialise FIXTHIS
   int dayNumber;
+  int timeNow;
   char cntrlTimesWD[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"}; //  how big is each array element? 6 elements each element 10 characters long (9 + 1 for /0)
   char cntrlTimesWE[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"};
 

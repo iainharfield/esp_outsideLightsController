@@ -16,6 +16,13 @@
 #include "defines.h"
 #include "utilities.h"
 
+//FIXTHIS
+//#define AUTOMODE 0 // Normal running mode - Heating times are based on the 3 time zones
+//#define NEXTMODE 1 // Advances the control time to the next zone. FIX-THIS: Crap description
+#define ONMODE 2   // Permanently ON.  Heat is permanently requested. Zones times are ignored
+//#define OFFMODE 3  // Permanently OFF.  Heat is never requested. Zones times are ignore
+
+
 //***********************
 // Template functions
 //***********************
@@ -43,21 +50,13 @@ extern void printTelnet(String);
 extern AsyncMqttClient mqttClient;
 extern void wifiSetupConfig(bool);
 extern templateServices coreServices;
-//extern bool weekDay;
-//extern int ohTimenow;
-//extern int ohTODReceived;
 extern char ntptod[MAX_CFGSTR_LENGTH];
 
-
+//*************************************
 // defined in cntrl.cpp
-//extern int SBWD;
-//extern int SBWE;            
-//extern int ZoneWD;          
-//extern int ZoneWE;         
-//extern int RunModeWD;      
-//extern int RunModeWE;   
-extern void startCntrl();
-
+//*************************************
+extern cntrlState cntrlStateWD;
+extern cntrlState cntrlStateWE;
 
 
 #define DRD_TIMEOUT 3
@@ -87,11 +86,6 @@ int LIGHTSAUTO      = 3;
 
 bool bManMode       = false; // true = Manual, false = automatic
 
-
-
-
-
-
 const char *oh3CommandTrigger   = "/house/cntrl/outside-lights-front/pir-command";	    // Event fron the PIR detector (front porch: PIRON or PIROFF
 const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";	 // 	Status of the Manual control switch control MAN or AUTO
 
@@ -99,12 +93,7 @@ const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";	 
 //************************
 // Application specific
 //************************
-//bool OLFControl(int, int);
-//void processCrtlTimes(char *, char (&ptr)[6][10], int lptr[6]);
-//bool processCntrlMessage(char *, const char *, const char *, const char *, int, int *, int *, char (&cntrlTimes)[6][10], int *);
-//bool onORoff();
-
-//void debugPrint();
+bool processCntrlMessageApp_Ext(char *, const char *, const char *, const char *);
 void processAppTOD_Ext();
 
 
@@ -197,7 +186,7 @@ void loop()
 bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessageProperties &properties, const size_t &len, const size_t &index, const size_t &total)
 {
     (void)payload;
-    char logString[MAX_LOGSTRING_LENGTH];
+    //char logString[MAX_LOGSTRING_LENGTH];
 
     char mqtt_payload[len+1];
     mqtt_payload[len] = '\0';
@@ -218,33 +207,46 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 
 		if (strcmp(mqtt_payload, "PIROFF") == 0)
 		{
-			// Switch off unless manually held on by switch
-			if (bManMode != true)
-				digitalWrite(relay_pin, LIGHTSOFF);	
+			if (cntrlStateWD.getRunMode() != ONMODE && cntrlStateWE.getRunMode() != ONMODE)
+			{
+				// Switch off unless manually held on by switch
+				if (bManMode != true)
+					digitalWrite(relay_pin, LIGHTSOFF);	
+			}
             return true;
 		}
-        else
+        /*else
 	    {
 			memset(logString, 0, sizeof logString);
 			sprintf(logString, "%s%s %s", "Unknown PIR Command received: ", topic, mqtt_payload);
 			mqttLog(logString, true, true);
             return true;
-	    }
+	    } */
     }    
-	else
+	/*else
 	{
 			memset(logString, 0, sizeof logString);
 			sprintf(logString, "%s%s %s", "Unknown Command received by App: ", topic, mqtt_payload);
 			mqttLog(logString, true, true);
-	}
+	}*/
     return false;
 }
 
 void processAppTOD_Ext()
 {
+	mqttLog("OLF Application Processing TOD", true, true);
 
 }
 
+bool processCntrlMessageApp_Ext(char *mqttMessage, const char *onMessage, const char *offMessage, const char *commandTopic)
+{
+	if (strcmp(mqttMessage, "SET") == 0)
+	{
+		mqttClient.publish(oh3StateManual,1, true, "AUTO");			// This just sets the UI to show that MAN start is OFF
+		return true;
+	}
+	return false;
+}
 
 
 // Subscribe to application specific topics
