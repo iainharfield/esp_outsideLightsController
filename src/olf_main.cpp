@@ -192,10 +192,10 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
     mqtt_payload[len] = '\0';
     strncpy(mqtt_payload, payload, len);
 
-    if (reporting == REPORT_DEBUG)
-	{
+    //if (reporting == REPORT_DEBUG)
+	//{
         mqttLog(mqtt_payload, true, true);
-    }
+    //}
 
 	if (strcmp(topic, oh3CommandTrigger) == 0)
 	{
@@ -211,7 +211,7 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 			{
 				// Switch off unless manually held on by switch
 				if (bManMode != true)
-					digitalWrite(relay_pin, LIGHTSOFF);	
+					digitalWrite(relay_pin_pir, LIGHTSOFF);	
 			}
             return true;
 		}
