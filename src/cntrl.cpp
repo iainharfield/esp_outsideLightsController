@@ -1,6 +1,9 @@
 #include "defines.h"
 #include <AsyncMqttClient_Generic.hpp>
 
+//#include <ESPAsync_WiFiManager.h> // needed for SSID and Password config
+//#include <AsyncMqtt_Generic.h>    // compile issues need to edit json file
+
 void startCntrl();
 bool onMqttMessageCntrlExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
 bool readyCheck();
