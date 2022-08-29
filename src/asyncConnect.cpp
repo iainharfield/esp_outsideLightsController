@@ -407,7 +407,7 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
    *     Process in times
    *     process is in NEXT mode
    ******************************************/
-  else if (strcmp(topic, oh3CommandTOD) == 0)
+  if (strcmp(topic, oh3CommandTOD) == 0)
   {
 
     dayNum = get_weekday(mqtt_payload);
@@ -476,15 +476,15 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
   //****************************
   // Implement contoller and Application MQTT   FIXTHIS - shit logic
   //****************************
-  if (onMqttMessageCntrlExt(topic, payload, properties, len, index, total) == false)
-  {
-        if (onMqttMessageAppExt(topic, payload, properties, len, index, total) == false)
-        {
-            memset(logString, 0, sizeof logString);
-            sprintf(logString, "%s%s %s", "Template: Unknown message received: ", topic, mqtt_payload);
-            mqttLog(logString, true, true);
-        }    
-  }
+  onMqttMessageCntrlExt(topic, payload, properties, len, index, total);
+  
+  onMqttMessageAppExt(topic, payload, properties, len, index, total);
+  //      {
+  //          memset(logString, 0, sizeof logString);
+  //          sprintf(logString, "%s%s %s", "Template: Unknown message received: ", topic, mqtt_payload);
+  //          mqttLog(logString, true, true);
+  //      }    
+  //}
 }
 
 void todNTPUpdate()
