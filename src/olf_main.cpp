@@ -28,7 +28,6 @@
 //***********************
 bool onMqttMessageAppExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
 void appMQTTTopicSubscribe();
-//int sensorRead();
 void telnet_extension_1(char);
 void telnet_extension_2(char);
 void telnet_extensionHelp(char);
@@ -59,6 +58,12 @@ extern cntrlState cntrlStateWD;
 extern cntrlState cntrlStateWE;
 
 
+#define WDCntlTimes  	"/house/cntrl/outside-lights-front/wd-control-times" // Times received from either UI or Python app
+#define WECntlTimes  	"/house/cntrl/outside-lights-front/we-control-times" // Times received from either UI or MySQL via Python app
+#define runtimeState    "/house/cntrl/outside-lights-front/runtime-state" 	 // published state: ON, OFF, and AUTO
+#define WDUICmdState 		"/house/cntrl/outside-lights-front/wd-command"		 // UI Button press received
+#define WEUICmdState 		"/house/cntrl/outside-lights-front/we-command"		 // UI Button press received
+
 #define DRD_TIMEOUT 3
 #define DRD_ADDRESS 0
 
@@ -87,7 +92,7 @@ int LIGHTSAUTO      = 3;
 bool bManMode       = false; // true = Manual, false = automatic
 
 const char *oh3CommandTrigger   = "/house/cntrl/outside-lights-front/pir-command";	    // Event fron the PIR detector (front porch: PIRON or PIROFF
-const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";	 // 	Status of the Manual control switch control MAN or AUTO
+const char *oh3StateManual		= "/house/cntrl/outside-lights-front/manual-state";	 // 	Status of the Manual control switch control MAN or AUTO
 
 
 //************************
@@ -124,6 +129,18 @@ void setup()
     {
         configWiFi = true;
     }
+
+	// this app is a contoller
+	// configure the MQTT topics for the Controller
+	
+	cntrlStateWD.setCntrlRunTimesStateTopic(runtimeState);
+	cntrlStateWD.setCntrlTimesTopic(WDCntlTimes);
+	cntrlStateWD.setUIcommandStateTopic(WDUICmdState);
+	
+	cntrlStateWE.setCntrlRunTimesStateTopic(runtimeState);
+	cntrlStateWE.setCntrlTimesTopic(WECntlTimes);
+	cntrlStateWE.setUIcommandStateTopic(WEUICmdState);
+	//startCntrl();
 
     // Platform setup: Set up and manage: WiFi, MQTT and Telnet
     platform_setup(configWiFi);

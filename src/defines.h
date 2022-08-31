@@ -80,6 +80,9 @@ class cntrlState
   int runMode;
   int switchBack;
   int zone;
+  String cntrlTimesTopic;
+  String UICmdTopic;
+  String CntrlRuntimeStateTopic;
 
 public:
   cntrlState() {}
@@ -94,7 +97,6 @@ public:
     runMode = rm;
     switchBack = sb;
     zone = zn;
-
   }
   int getRunMode()
   {
@@ -120,8 +122,30 @@ public:
   {
     zone = zn;
   }
-
-
+  void setCntrlTimesTopic(String timesTopic)
+  {
+    cntrlTimesTopic = timesTopic;
+  }
+  void setUIcommandStateTopic(String UIcmdTopic)
+  {
+    UICmdTopic = UIcmdTopic;
+  }
+  void setCntrlRunTimesStateTopic(String runtimeState)
+  {
+    CntrlRuntimeStateTopic = runtimeState;
+  }
+  String getCntrlTimesTopic()
+  {
+    return cntrlTimesTopic;
+  }
+  String getCntrlRunTimesStateTopic()
+  {
+    return CntrlRuntimeStateTopic;
+  }
+  String getUIcommandStateTopic()
+  {
+    return UICmdTopic  ;
+  }
 };
 
 

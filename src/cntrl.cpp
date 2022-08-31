@@ -79,13 +79,12 @@ char cntrlTimesWD[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"}; //  ho
 char cntrlTimesWE[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"};
 
 // Contoller specific MQTT topics
-const char *oh3CommandWDTimes = "/house/cntrl/outside-lights-front/wd-control-times"; // Times message from either UI or Python app
-const char *oh3CommandWETimes = "/house/cntrl/outside-lights-front/we-control-times"; // Times message from either UI or MySQL via Python app
-const char *oh3StateRuntime = "/house/cntrl/outside-lights-front/runtime-state";	  // ON, OFF, and AUTO
+//const char *oh3CommandWDTimes = "/house/cntrl/outside-lights-front/wd-control-times"; // Times received from either UI or Python app
+//const char *oh3CommandWETimes = "/house/cntrl/outside-lights-front/we-control-times"; // Times received from either UI or MySQL via Python app
+const char *oh3StateRuntime   = "/house/cntrl/outside-lights-front/runtime-state";	  // published state: ON, OFF, and AUTO
 //const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";		  // Status of the Manual control switch control MAN or AUTO
-
-const char *oh3CmdStateWD       = "/house/cntrl/outside-lights-front/wd-command";	  // UI Button press
-const char *oh3CmdStateWE       = "/house/cntrl/outside-lights-front/we-command";     // UI Button press
+//const char *oh3CmdStateWD       = "/house/cntrl/outside-lights-front/wd-command";	  // UI Button press
+//const char *oh3CmdStateWE       = "/house/cntrl/outside-lights-front/we-command";     // UI Button press
 
 cntrlState cntrlStateWD(AUTOMODE, SBUNKOWN, ZONEGAP);
 cntrlState cntrlStateWE(AUTOMODE, SBUNKOWN, ZONEGAP);
@@ -171,7 +170,7 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	 * Week days Times received
 	 * array of three times zones : on,off,on,off,on,off
 	 ****************************************************/
-	if (strcmp(topic, oh3CommandWDTimes) == 0)
+	if (strcmp(topic, cntrlStateWD.getCntrlTimesTopic().c_str()) == 0)
 	{
 		mqttLog("WD Control times Received", true, true);
 		processCrtlTimes(mqtt_payload, cntrlTimesWD, lcntrlTimesWD);
@@ -182,7 +181,7 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	 * Week End Times received
 	 * array of three times zones : on,off,on,off,on,off
 	 ****************************************************/
-	else if (strcmp(topic, oh3CommandWETimes) == 0)
+	else if (strcmp(topic, cntrlStateWE.getCntrlTimesTopic().c_str()) == 0)
 	{
 		mqttLog("WE Control times Received", true, true);
 		processCrtlTimes(mqtt_payload, cntrlTimesWE, lcntrlTimesWE);
@@ -198,17 +197,17 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	 * NEXT: Move control setting to next time zone
 	 * SET:  Set the heat times
 	 ************************************************************************/
-	else if (strcmp(topic, oh3CmdStateWD) == 0)
+	else if (strcmp(topic, cntrlStateWD.getUIcommandStateTopic().c_str()) == 0)
 	{
 		WDCommandReceived = true;
 		if (coreServices.getWeekDayState() == true)
 		{
-			if (processCntrlMessage(mqtt_payload, "ON", "OFF", oh3CmdStateWD) == true)
+			if (processCntrlMessage(mqtt_payload, "ON", "OFF", cntrlStateWD.getUIcommandStateTopic().c_str()) == true)
 			{
 				Serial.print("ERROR: Unknown message - ");
 				Serial.print(mqtt_payload);
 				Serial.print(" - received for topic ");
-				Serial.println(oh3CmdStateWD);
+				Serial.println(cntrlStateWD.getUIcommandStateTopic().c_str());
 			}
 		}
         return true;
@@ -221,17 +220,17 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	 * NEXT: Move control setting to next time zone
 	 * SET:  Set the heat times
 	 ************************************************************************/
-	else if (strcmp(topic, oh3CmdStateWE) == 0)
+	else if (strcmp(topic, cntrlStateWE.getUIcommandStateTopic().c_str()) == 0)
 	{
 		WECommandReceived = true;
 		if (coreServices.getWeekDayState() == false) // false == weekend
 		{
-			if (processCntrlMessage(mqtt_payload, "ON", "OFF", oh3CmdStateWE) == true)
+			if (processCntrlMessage(mqtt_payload, "ON", "OFF", cntrlStateWE.getUIcommandStateTopic().c_str()) == true)
 			{
 				Serial.print("ERROR: Unknown message - ");
 				Serial.print(mqtt_payload);
 				Serial.print(" - received for topic ");
-				Serial.println(oh3CmdStateWE);
+				Serial.println(cntrlStateWE.getUIcommandStateTopic().c_str());
 			}
 		}
         return true;
@@ -489,11 +488,18 @@ void debugPrint()
 // Subscribe to controler specific topics
 void cntrlMQTTTopicSubscribe()
 {	
-	mqttTopicsubscribe(oh3CommandWDTimes, 2);
-	mqttTopicsubscribe(oh3CommandWETimes, 2);
 
-	mqttTopicsubscribe(oh3CmdStateWD, 2);
-	mqttTopicsubscribe(oh3CmdStateWE, 2);
+	//mqttTopicsubscribe(oh3CommandWDTimes, 2);
+	//mqttTopicsubscribe(oh3CommandWETimes, 2);
+
+	//mqttTopicsubscribe(oh3CmdStateWD, 2);
+	//mqttTopicsubscribe(oh3CmdStateWE, 2);
+
+    mqttTopicsubscribe(cntrlStateWD.getCntrlTimesTopic().c_str(), 2);
+	mqttTopicsubscribe(cntrlStateWE.getCntrlTimesTopic().c_str(), 2);
+
+	mqttTopicsubscribe(cntrlStateWD.getUIcommandStateTopic().c_str(), 2);
+	mqttTopicsubscribe(cntrlStateWE.getUIcommandStateTopic().c_str(), 2);
 }
 
 
@@ -688,7 +694,7 @@ void processCntrlTOD_Ext()
 				{
 					cntrlStateWD.setRunMode(AUTOMODE);
 					mqttClient.publish(oh3StateRuntime, 1, true, "AUTO");
-					mqttClient.publish(oh3CmdStateWD, 1, true, "SET");	
+					mqttClient.publish(cntrlStateWD.getUIcommandStateTopic().c_str(), 1, true, "SET");	//
 					app_WD_auto();
 					
 				}
@@ -709,7 +715,7 @@ void processCntrlTOD_Ext()
 				{
 					cntrlStateWE.setRunMode(AUTOMODE);
 					mqttClient.publish(oh3StateRuntime, 1, true, "AUTO");
-					mqttClient.publish(oh3CmdStateWE, 1, true, "SET");	
+					mqttClient.publish(cntrlStateWE.getUIcommandStateTopic().c_str(), 1, true, "SET");	
 					app_WE_auto();
 				}
 			}
