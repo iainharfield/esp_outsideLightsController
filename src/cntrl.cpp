@@ -81,7 +81,7 @@ char cntrlTimesWE[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"};
 // Contoller specific MQTT topics
 //const char *oh3CommandWDTimes = "/house/cntrl/outside-lights-front/wd-control-times"; // Times received from either UI or Python app
 //const char *oh3CommandWETimes = "/house/cntrl/outside-lights-front/we-control-times"; // Times received from either UI or MySQL via Python app
-const char *oh3StateRuntime   = "/house/cntrl/outside-lights-front/runtime-state";	  // published state: ON, OFF, and AUTO
+//const char *oh3StateRuntime   = "/house/cntrl/outside-lights-front/runtime-state";	  // published state: ON, OFF, and AUTO
 //const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";		  // Status of the Manual control switch control MAN or AUTO
 //const char *oh3CmdStateWD       = "/house/cntrl/outside-lights-front/wd-command";	  // UI Button press
 //const char *oh3CmdStateWE       = "/house/cntrl/outside-lights-front/we-command";     // UI Button press
@@ -252,13 +252,13 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 		if (coreServices.getWeekDayState() == true)
 		{
 			cntrlStateWD.setRunMode(ONMODE);
-			mqttClient.publish(oh3StateRuntime, 1, true, "ON");		// FIXTHIS WD or WE
+			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
 			app_WD_on();											 
 		}
 		else
 		{
 			cntrlStateWE.setRunMode(ONMODE);
-			mqttClient.publish(oh3StateRuntime, 1, true, "ON");		// FIXTHIS WD or WE
+			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
 			app_WE_on();											 
 		}
 	}
@@ -268,22 +268,22 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 		if (coreServices.getWeekDayState() == true)
 		{
 			cntrlStateWD.setRunMode(ONMODE);
-			mqttClient.publish(oh3StateRuntime, 1, true, "OFF");		// FIXTHIS WD or WE
+			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF");		// FIXTHIS WD or WE
 			app_WD_off();											 
 		}
 		else
 		{
 			cntrlStateWE.setRunMode(ONMODE);
-			mqttClient.publish(oh3StateRuntime, 1, true, "OFF");		// FIXTHIS WD or WE
+			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF");		// FIXTHIS WD or WE
 			app_WE_off();											 
 		}
 	}
 	else if (strcmp(mqttMessage, "ONOFF") == 0)
 	{
-		mqttClient.publish(oh3StateRuntime,1, true, "ON");		// FIXTHIS WD or WE
+		mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "ON");		// FIXTHIS WD or WE
 		app_WD_on();											// FIXTHIS WD or WE 
 		delay(5000);											// FIX this
-		mqttClient.publish(oh3StateRuntime,1, true, "OFF");		// FIXTHIS WD or WE
+		mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "OFF");		// FIXTHIS WD or WE
 		app_WD_off(); 											// FIXTHIS WD or WE
 
 		cntrlStateWE.setRunMode(AUTOMODE);			// FIX THIS : why am I doing this? leave as is
@@ -294,14 +294,14 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 		{			
 			cntrlStateWD.setRunMode(NEXTMODE);
 			cntrlStateWD.setSwitchBack(SBOFF);						// Switch back to AUTOMODE when Time of Day is next OFF (don't switch back when this zone ends)	
-			mqttClient.publish(oh3StateRuntime, 1, true, "ON");		// FIXTHIS WD or WE
+			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
 			app_WD_on();											// Set on because we want ON until the end of the next OFF	
 		}
 		else
 		{
 			cntrlStateWE.setRunMode(NEXTMODE);
 			cntrlStateWE.setSwitchBack(SBOFF);						// Switch back to AUTOMODE when Time of Day is next OFF (don't switch back when this zone ends)	
-			mqttClient.publish(oh3StateRuntime, 1, true, "ON");		// FIXTHIS WD or WE
+			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
 			app_WE_on();											// Set on because we want ON until the end of the next OFF	
 
 		}
@@ -318,12 +318,12 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 			cntrlStateWD.setRunMode(AUTOMODE);
 			if (onORoff() == true)
 			{
-				mqttClient.publish(oh3StateRuntime,1, true, "ON");		// FIXTHIS WD or WE
+				mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(),1, true, "ON");		// FIXTHIS WD or WE
 				app_WD_on();											 
 			}
 			else
 			{
-				mqttClient.publish(oh3StateRuntime,1, true, "OFF");		// FIXTHIS WD or WE
+				mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(),1, true, "OFF");		// FIXTHIS WD or WE
 				app_WD_off(); 											
 			}
 		}
@@ -332,12 +332,12 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 			cntrlStateWE.setRunMode(AUTOMODE);
 			if (onORoff() == true)
 			{
-				mqttClient.publish(oh3StateRuntime,1, true, "ON");		// FIXTHIS WD or WE
+				mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "ON");		// FIXTHIS WD or WE
 				app_WE_on();											 
 			}
 			else
 			{
-				mqttClient.publish(oh3StateRuntime,1, true, "OFF");		// FIXTHIS WD or WE
+				mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "OFF");		// FIXTHIS WD or WE
 				app_WE_off(); 											
 			}
 		}	
@@ -693,7 +693,7 @@ void processCntrlTOD_Ext()
 				if (onORoff() == false) // moved into a zone gap
 				{
 					cntrlStateWD.setRunMode(AUTOMODE);
-					mqttClient.publish(oh3StateRuntime, 1, true, "AUTO");
+					mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "AUTO");
 					mqttClient.publish(cntrlStateWD.getUIcommandStateTopic().c_str(), 1, true, "SET");	//
 					app_WD_auto();
 					
@@ -714,7 +714,7 @@ void processCntrlTOD_Ext()
 				if (onORoff() == false) // moved into a zone gap
 				{
 					cntrlStateWE.setRunMode(AUTOMODE);
-					mqttClient.publish(oh3StateRuntime, 1, true, "AUTO");
+					mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "AUTO");
 					mqttClient.publish(cntrlStateWE.getUIcommandStateTopic().c_str(), 1, true, "SET");	
 					app_WE_auto();
 				}

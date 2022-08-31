@@ -61,8 +61,8 @@ extern cntrlState cntrlStateWE;
 #define WDCntlTimes  	"/house/cntrl/outside-lights-front/wd-control-times" // Times received from either UI or Python app
 #define WECntlTimes  	"/house/cntrl/outside-lights-front/we-control-times" // Times received from either UI or MySQL via Python app
 #define runtimeState    "/house/cntrl/outside-lights-front/runtime-state" 	 // published state: ON, OFF, and AUTO
-#define WDUICmdState 		"/house/cntrl/outside-lights-front/wd-command"		 // UI Button press received
-#define WEUICmdState 		"/house/cntrl/outside-lights-front/we-command"		 // UI Button press received
+#define WDUICmdState 	"/house/cntrl/outside-lights-front/wd-command"		 // UI Button press received
+#define WEUICmdState 	"/house/cntrl/outside-lights-front/we-command"		 // UI Button press received
 
 #define DRD_TIMEOUT 3
 #define DRD_ADDRESS 0
