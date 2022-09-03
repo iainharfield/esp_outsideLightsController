@@ -15,7 +15,7 @@ void cntrlMQTTTopicSubscribe();
 //
 // Defined in utilities
 //
-extern bool mqttLog(const char*, bool, bool);
+extern bool mqttLog(const char *, bool, bool);
 
 //*************************************
 // defined in asyncConnect.cpp
@@ -29,7 +29,6 @@ extern templateServices coreServices;
 // Application User exits
 //
 extern bool processCntrlMessageApp_Ext(char *, const char *, const char *, const char *);
-
 
 extern int ohTimenow;
 extern bool ohTODReceived;
@@ -66,7 +65,7 @@ extern devConfig espDevice;
 
 #define ZONEGAP 9
 
-//bool bManMode = false; // true = Manual, false = automatic
+// bool bManMode = false; // true = Manual, false = automatic
 
 bool TimesReceivedWD = false;
 bool TimesReceivedWE = false;
@@ -79,12 +78,12 @@ char cntrlTimesWD[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"}; //  ho
 char cntrlTimesWE[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"};
 
 // Contoller specific MQTT topics
-//const char *oh3CommandWDTimes = "/house/cntrl/outside-lights-front/wd-control-times"; // Times received from either UI or Python app
-//const char *oh3CommandWETimes = "/house/cntrl/outside-lights-front/we-control-times"; // Times received from either UI or MySQL via Python app
-//const char *oh3StateRuntime   = "/house/cntrl/outside-lights-front/runtime-state";	  // published state: ON, OFF, and AUTO
-//const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";		  // Status of the Manual control switch control MAN or AUTO
-//const char *oh3CmdStateWD       = "/house/cntrl/outside-lights-front/wd-command";	  // UI Button press
-//const char *oh3CmdStateWE       = "/house/cntrl/outside-lights-front/we-command";     // UI Button press
+// const char *oh3CommandWDTimes = "/house/cntrl/outside-lights-front/wd-control-times"; // Times received from either UI or Python app
+// const char *oh3CommandWETimes = "/house/cntrl/outside-lights-front/we-control-times"; // Times received from either UI or MySQL via Python app
+// const char *oh3StateRuntime   = "/house/cntrl/outside-lights-front/runtime-state";	  // published state: ON, OFF, and AUTO
+// const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";		  // Status of the Manual control switch control MAN or AUTO
+// const char *oh3CmdStateWD       = "/house/cntrl/outside-lights-front/wd-command";	  // UI Button press
+// const char *oh3CmdStateWE       = "/house/cntrl/outside-lights-front/we-command";     // UI Button press
 
 cntrlState cntrlStateWD(AUTOMODE, SBUNKOWN, ZONEGAP);
 cntrlState cntrlStateWE(AUTOMODE, SBUNKOWN, ZONEGAP);
@@ -95,7 +94,6 @@ void startCntrl()
 	memset(logString, 0, sizeof logString);
 	sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Starting Controlle");
 	mqttLog(logString, true, true);
-	
 }
 
 //***********************************************************************************
@@ -155,7 +153,7 @@ void processCrtlTimes(char *inStr, char (&ptr)[6][10], int lptr[6])
 bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMessageProperties &properties, const size_t &len, const size_t &index, const size_t &total)
 {
 	(void)payload;
-	//char logString[MAX_LOGSTRING_LENGTH];
+	// char logString[MAX_LOGSTRING_LENGTH];
 
 	char mqtt_payload[len + 1];
 	mqtt_payload[len] = '\0';
@@ -188,7 +186,7 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 		TimesReceivedWE = true;
 		return true;
 	}
-		/************************************************************************
+	/************************************************************************
 	 * Weekday Command Control
 	 * Message content:
 	 * ON :  Set control permanently on. Ignore all time of day settings
@@ -210,7 +208,7 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 				Serial.println(cntrlStateWD.getUIcommandStateTopic().c_str());
 			}
 		}
-        return true;
+		return true;
 	}
 	/************************************************************************
 	 * Weekend Command Control
@@ -233,11 +231,10 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 				Serial.println(cntrlStateWE.getUIcommandStateTopic().c_str());
 			}
 		}
-        return true;
+		return true;
 	}
 	return false;
 }
-
 
 /************************************************************
  * Process lighting control ON, OFF, SET and NEXT messages
@@ -248,18 +245,18 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 {
 	if (strcmp(mqttMessage, "ON") == 0)
 	{
-		
+
 		if (coreServices.getWeekDayState() == true)
 		{
 			cntrlStateWD.setRunMode(ONMODE);
-			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
-			app_WD_on();											 
+			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON"); // FIXTHIS WD or WE
+			app_WD_on();
 		}
 		else
 		{
 			cntrlStateWE.setRunMode(ONMODE);
-			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
-			app_WE_on();											 
+			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON"); // FIXTHIS WD or WE
+			app_WE_on();
 		}
 	}
 	else if (strcmp(mqttMessage, "OFF") == 0)
@@ -268,48 +265,46 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 		if (coreServices.getWeekDayState() == true)
 		{
 			cntrlStateWD.setRunMode(ONMODE);
-			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF");		// FIXTHIS WD or WE
-			app_WD_off();											 
+			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF"); // FIXTHIS WD or WE
+			app_WD_off();
 		}
 		else
 		{
 			cntrlStateWE.setRunMode(ONMODE);
-			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF");		// FIXTHIS WD or WE
-			app_WE_off();											 
+			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF"); // FIXTHIS WD or WE
+			app_WE_off();
 		}
 	}
 	else if (strcmp(mqttMessage, "ONOFF") == 0)
 	{
-		mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "ON");		// FIXTHIS WD or WE
-		app_WD_on();											// FIXTHIS WD or WE 
-		delay(5000);											// FIX this
-		mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "OFF");		// FIXTHIS WD or WE
-		app_WD_off(); 											// FIXTHIS WD or WE
+		mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");  // FIXTHIS WD or WE
+		app_WD_on();																		   // FIXTHIS WD or WE
+		delay(5000);																		   // FIX this
+		mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF"); // FIXTHIS WD or WE
+		app_WD_off();																		   // FIXTHIS WD or WE
 
-		cntrlStateWE.setRunMode(AUTOMODE);			// FIX THIS : why am I doing this? leave as is
+		cntrlStateWE.setRunMode(AUTOMODE); // FIX THIS : why am I doing this? leave as is
 	}
 	else if (strcmp(mqttMessage, "NEXT") == 0)
 	{
 		if (coreServices.getWeekDayState() == true)
-		{			
+		{
 			cntrlStateWD.setRunMode(NEXTMODE);
-			cntrlStateWD.setSwitchBack(SBOFF);						// Switch back to AUTOMODE when Time of Day is next OFF (don't switch back when this zone ends)	
-			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
-			app_WD_on();											// Set on because we want ON until the end of the next OFF	
+			cntrlStateWD.setSwitchBack(SBOFF);													  // Switch back to AUTOMODE when Time of Day is next OFF (don't switch back when this zone ends)
+			mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON"); // FIXTHIS WD or WE
+			app_WD_on();																		  // Set on because we want ON until the end of the next OFF
 		}
 		else
 		{
 			cntrlStateWE.setRunMode(NEXTMODE);
-			cntrlStateWE.setSwitchBack(SBOFF);						// Switch back to AUTOMODE when Time of Day is next OFF (don't switch back when this zone ends)	
-			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON");		// FIXTHIS WD or WE
-			app_WE_on();											// Set on because we want ON until the end of the next OFF	
-
+			cntrlStateWE.setSwitchBack(SBOFF);													  // Switch back to AUTOMODE when Time of Day is next OFF (don't switch back when this zone ends)
+			mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON"); // FIXTHIS WD or WE
+			app_WE_on();																		  // Set on because we want ON until the end of the next OFF
 		}
-
 	}
 	else if (strcmp(mqttMessage, "SET") == 0)
 	{
-		
+
 		mqttLog("processOLFCntrlMessage: SET received.", true, true);
 
 		// IF pressed SET then check the ON Close time and sent the appropriate message
@@ -318,13 +313,13 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 			cntrlStateWD.setRunMode(AUTOMODE);
 			if (onORoff() == true)
 			{
-				mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(),1, true, "ON");		// FIXTHIS WD or WE
-				app_WD_on();											 
+				mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON"); // FIXTHIS WD or WE
+				app_WD_on();
 			}
 			else
 			{
-				mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(),1, true, "OFF");		// FIXTHIS WD or WE
-				app_WD_off(); 											
+				mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF"); // FIXTHIS WD or WE
+				app_WD_off();
 			}
 		}
 		else
@@ -332,15 +327,15 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 			cntrlStateWE.setRunMode(AUTOMODE);
 			if (onORoff() == true)
 			{
-				mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "ON");		// FIXTHIS WD or WE
-				app_WE_on();											 
+				mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "ON"); // FIXTHIS WD or WE
+				app_WE_on();
 			}
 			else
 			{
-				mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(),1, true, "OFF");		// FIXTHIS WD or WE
-				app_WE_off(); 											
+				mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "OFF"); // FIXTHIS WD or WE
+				app_WE_off();
 			}
-		}	
+		}
 	}
 	else
 	{
@@ -350,10 +345,6 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 	processCntrlMessageApp_Ext(mqttMessage, onMessage, offMessage, commandTopic);
 	return false;
 }
-
-
-
-
 
 /***********************************************************************
  * Determines if control should be ON or OFF based on current zone times
@@ -369,8 +360,8 @@ bool processCntrlMessage(char *mqttMessage, const char *onMessage, const char *o
 bool onORoff()
 {
 
-	//char logString[MAX_LOGSTRING_LENGTH]; 
-	// debugPrint();
+	// char logString[MAX_LOGSTRING_LENGTH];
+	//  debugPrint();
 	mqttLog("processOLFCntrlMessage: onORoff checking", true, true);
 
 	if (coreServices.getWeekDayState() == true)
@@ -396,18 +387,17 @@ bool onORoff()
 			// Serial.print (",");
 			// Serial.print ( lcntrlTimes[i+1]);
 			// Serial.print ("] ");
-			
-		
-			//memset(logString,0, sizeof logString);
-			//sprintf(logString, "%s,%s,%s,%s[%i: %i: %i]", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "ohTimenow: ", ohTimenow, lcntrlTimesWD[i], lcntrlTimesWE[i]);
-			//mqttLog(logString,true, true);
+
+			// memset(logString,0, sizeof logString);
+			// sprintf(logString, "%s,%s,%s,%s[%i: %i: %i]", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "ohTimenow: ", ohTimenow, lcntrlTimesWD[i], lcntrlTimesWE[i]);
+			// mqttLog(logString,true, true);
 
 			if (coreServices.getWeekDayState() == true)
 			{
 				if (ohTimenow >= lcntrlTimesWD[i] && ohTimenow < lcntrlTimesWD[i + 1])
 				{
-					state = true; // Switch ON
-					cntrlStateWD.setZone(i);	  // Update which zone we are in (there maybe overlapping time zones)
+					state = true;			 // Switch ON
+					cntrlStateWD.setZone(i); // Update which zone we are in (there maybe overlapping time zones)
 					break;
 				}
 			}
@@ -415,8 +405,8 @@ bool onORoff()
 			{
 				if (ohTimenow >= lcntrlTimesWE[i] && ohTimenow < lcntrlTimesWE[i + 1])
 				{
-					state = true; // Switch ON
-					cntrlStateWE.setZone(i);	  // Update which zone we are in (there maybe overlapping time zones)
+					state = true;			 // Switch ON
+					cntrlStateWE.setZone(i); // Update which zone we are in (there maybe overlapping time zones)
 					break;
 				}
 			}
@@ -425,17 +415,17 @@ bool onORoff()
 
 		if (state == true)
 		{
-			//FIXTHIS
-			//mqttLog("onORoff returns  - ON", true, true);
-			//Serial.println(" and set to ON");
+			// FIXTHIS
+			// mqttLog("onORoff returns  - ON", true, true);
+			// Serial.println(" and set to ON");
 		}
 		else
 		{
 			// FIXTHIS
 
-			//mqttLog("onORoff returns  - OFF", true, true);
-			//Serial.println(" In between zones so set to OFF unless NEXT override");
-			// mqttLog("In between zones so set to OFF unless NEXT. If in NEXT then don't switch OFF - wait for next zone to switch OFF", true);
+			// mqttLog("onORoff returns  - OFF", true, true);
+			// Serial.println(" In between zones so set to OFF unless NEXT override");
+			//  mqttLog("In between zones so set to OFF unless NEXT. If in NEXT then don't switch OFF - wait for next zone to switch OFF", true);
 		}
 	}
 	return state;
@@ -449,18 +439,18 @@ bool readyCheck()
 {
 	if (ohTODReceived == true && TimesReceivedWD == true && TimesReceivedWE == true)
 	{
-		//mqttLog("readyCheck = true", true, true);
+		// mqttLog("readyCheck = true", true, true);
 		return true;
 	}
 	else
 	{
-		//mqttLog("readyCheck = false...", true, true);
+		// mqttLog("readyCheck = false...", true, true);
 
-		//if (ohTODReceived == false)
+		// if (ohTODReceived == false)
 		//	mqttLog("TOD not received", true, true);
-		//if (TimesReceivedWD == false)
+		// if (TimesReceivedWD == false)
 		//	mqttLog("WD Contol times not received", true, true);
-		//if (TimesReceivedWE == false)
+		// if (TimesReceivedWE == false)
 		//	mqttLog("WE Contol times not received", true, true);
 
 		return false;
@@ -487,21 +477,20 @@ void debugPrint()
 */
 // Subscribe to controler specific topics
 void cntrlMQTTTopicSubscribe()
-{	
+{
 
-	//mqttTopicsubscribe(oh3CommandWDTimes, 2);
-	//mqttTopicsubscribe(oh3CommandWETimes, 2);
+	// mqttTopicsubscribe(oh3CommandWDTimes, 2);
+	// mqttTopicsubscribe(oh3CommandWETimes, 2);
 
-	//mqttTopicsubscribe(oh3CmdStateWD, 2);
-	//mqttTopicsubscribe(oh3CmdStateWE, 2);
+	// mqttTopicsubscribe(oh3CmdStateWD, 2);
+	// mqttTopicsubscribe(oh3CmdStateWE, 2);
 
-    mqttTopicsubscribe(cntrlStateWD.getCntrlTimesTopic().c_str(), 2);
+	mqttTopicsubscribe(cntrlStateWD.getCntrlTimesTopic().c_str(), 2);
 	mqttTopicsubscribe(cntrlStateWE.getCntrlTimesTopic().c_str(), 2);
 
 	mqttTopicsubscribe(cntrlStateWD.getUIcommandStateTopic().c_str(), 2);
 	mqttTopicsubscribe(cntrlStateWE.getUIcommandStateTopic().c_str(), 2);
 }
-
 
 //************************************
 // Application specific behaviour
@@ -636,7 +625,7 @@ bool timeReceivedChecker()
 }
 
 //**********************************************************************
-// Controller TOD Porocessing 
+// Controller TOD Porocessing
 // check current time against configutation and decide what to do.
 // Send appropriate MQTT command for each control.
 // Run this everytime the TOD changes
@@ -659,12 +648,12 @@ void processCntrlTOD_Ext()
 				// trigger Application let it know that the Contoller in an on period.
 				// Let the app decide what to do.
 				app_WD_on();
-				//OLFControl(relay_pin, LIGHTSON);
+				// OLFControl(relay_pin, LIGHTSON);
 			}
 			else
 			{
 				app_WD_off();
-				//OLFControl(relay_pin, LIGHTSOFF);
+				// OLFControl(relay_pin, LIGHTSOFF);
 			}
 		}
 		else if (cntrlStateWE.getRunMode() == AUTOMODE && coreServices.getWeekDayState() == false)
@@ -672,12 +661,12 @@ void processCntrlTOD_Ext()
 			if (onORoff() == true)
 			{
 				app_WE_on();
-				//OLFControl(relay_pin, LIGHTSON);
+				// OLFControl(relay_pin, LIGHTSON);
 			}
 			else
 			{
 				app_WE_off();
-				//OLFControl(relay_pin, LIGHTSOFF);
+				// OLFControl(relay_pin, LIGHTSOFF);
 			}
 		}
 		else if (cntrlStateWD.getRunMode() == NEXTMODE && coreServices.getWeekDayState() == true)
@@ -685,8 +674,8 @@ void processCntrlTOD_Ext()
 			// onORoff updates zone to the zone currently in
 			if (cntrlStateWD.getSwitchBack() == SBOFF && cntrlStateWD.getZone() == ZONEGAP)
 			{
-				if (onORoff() == true) // moved into an on zone
-					cntrlStateWD.setSwitchBack(SBON);	   // allow switch back to occur at end of zone period
+				if (onORoff() == true)				  // moved into an on zone
+					cntrlStateWD.setSwitchBack(SBON); // allow switch back to occur at end of zone period
 			}
 			else if (cntrlStateWD.getSwitchBack() == SBON)
 			{
@@ -694,9 +683,8 @@ void processCntrlTOD_Ext()
 				{
 					cntrlStateWD.setRunMode(AUTOMODE);
 					mqttClient.publish(cntrlStateWD.getCntrlRunTimesStateTopic().c_str(), 1, true, "AUTO");
-					mqttClient.publish(cntrlStateWD.getUIcommandStateTopic().c_str(), 1, true, "SET");	//
+					mqttClient.publish(cntrlStateWD.getUIcommandStateTopic().c_str(), 1, true, "SET"); //
 					app_WD_auto();
-					
 				}
 			}
 		}
@@ -706,8 +694,8 @@ void processCntrlTOD_Ext()
 			// onORoff updates zone to the zone currently in
 			if (cntrlStateWE.getSwitchBack() == SBOFF && cntrlStateWE.getZone() == ZONEGAP)
 			{
-				if (onORoff() == true) // moved into an on zone
-					cntrlStateWE.setSwitchBack(SBON);	   // allow switch back to occur
+				if (onORoff() == true)				  // moved into an on zone
+					cntrlStateWE.setSwitchBack(SBON); // allow switch back to occur
 			}
 			else if (cntrlStateWE.getSwitchBack() == SBON)
 			{
@@ -715,7 +703,7 @@ void processCntrlTOD_Ext()
 				{
 					cntrlStateWE.setRunMode(AUTOMODE);
 					mqttClient.publish(cntrlStateWE.getCntrlRunTimesStateTopic().c_str(), 1, true, "AUTO");
-					mqttClient.publish(cntrlStateWE.getUIcommandStateTopic().c_str(), 1, true, "SET");	
+					mqttClient.publish(cntrlStateWE.getUIcommandStateTopic().c_str(), 1, true, "SET");
 					app_WE_auto();
 				}
 			}
