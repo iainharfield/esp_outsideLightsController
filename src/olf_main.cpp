@@ -224,12 +224,12 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 
 		if (strcmp(mqtt_payload, "PIROFF") == 0)
 		{
-			if (cntrlStateWD.getRunMode() != ONMODE && cntrlStateWE.getRunMode() != ONMODE)
-			{
+			//if (cntrlStateWD.getRunMode() != ONMODE && cntrlStateWE.getRunMode() != ONMODE)
+			//{
 				// Switch off unless manually held on by switch
 				if (bManMode != true)
 					digitalWrite(relay_pin_pir, LIGHTSOFF);	
-			}
+			//}
             return true;
 		}
         /*else
