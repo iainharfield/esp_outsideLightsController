@@ -38,6 +38,25 @@
 #define REPORT_WARN 1
 #define REPORT_DEBUG 2
 
+
+//***************************************************************
+// Controller Specific MQTT Topics and config
+//***************************************************************
+#define AUTOMODE 0 // Normal running mode - Heating times are based on the 3 time zones
+#define NEXTMODE 1 // Advances the control time to the next zone. FIX-THIS: Crap description
+#define ONMODE 2   // Permanently ON.  Heat is permanently requested. Zones times are ignored
+#define OFFMODE 3  // Permanently OFF.  Heat is never requested. Zones times are ignored
+
+#define SBUNKOWN 0
+#define SBON 1
+#define SBOFF 2
+
+#define ZONE1 0
+#define ZONE2 1
+#define ZONE3 2
+
+#define ZONEGAP 9
+
 class devConfig
 {
   String devName;
@@ -80,23 +99,33 @@ class cntrlState
   int runMode;
   int switchBack;
   int zone;
+  bool cntrlTimesReceived;
+  String refreshID;
   String cntrlTimesTopic;
   String UICmdTopic;
   String CntrlRuntimeStateTopic;
 
 public:
-  cntrlState() {}
+  cntrlState()
+  {
+    runMode = AUTOMODE;
+    switchBack = SBUNKOWN;
+    zone = ZONEGAP;
+    cntrlTimesReceived = false; 
+  }
   cntrlState(int rm, int sb, int zn)
   {
     runMode = rm;
     switchBack = sb;
     zone = zn;
+    cntrlTimesReceived = false;
   }
   void setup(int rm, int sb, int zn)
   {
     runMode = rm;
     switchBack = sb;
     zone = zn;
+    cntrlTimesReceived = false;
   }
   int getRunMode()
   {
@@ -133,6 +162,22 @@ public:
   void setCntrlRunTimesStateTopic(String runtimeState)
   {
     CntrlRuntimeStateTopic = runtimeState;
+  }
+  void setCntrlTimesReceived(bool ctr)
+  {
+    cntrlTimesReceived = ctr;
+  }
+  void setRefreshID(String rID)
+  {
+    refreshID = rID;
+  }
+  String getRefreshID()
+  {
+    return refreshID;
+  }
+  bool getCntrlTimesReceived()
+  {
+    return cntrlTimesReceived;
   }
   String getCntrlTimesTopic()
   {

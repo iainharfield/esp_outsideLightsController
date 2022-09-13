@@ -47,28 +47,10 @@ extern void app_WE_auto();
 //
 extern devConfig espDevice;
 
-//***************************************************************
-// Application Specific MQTT Topics and config
-//***************************************************************
-#define AUTOMODE 0 // Normal running mode - Heating times are based on the 3 time zones
-#define NEXTMODE 1 // Advances the control time to the next zone. FIX-THIS: Crap description
-#define ONMODE 2   // Permanently ON.  Heat is permanently requested. Zones times are ignored
-#define OFFMODE 3  // Permanently OFF.  Heat is never requested. Zones times are ignored
 
-#define SBUNKOWN 0
-#define SBON 1
-#define SBOFF 2
-
-#define ZONE1 0
-#define ZONE2 1
-#define ZONE3 2
-
-#define ZONEGAP 9
 
 // bool bManMode = false; // true = Manual, false = automatic
 
-bool TimesReceivedWD = false;
-bool TimesReceivedWE = false;
 bool WDCommandReceived = false;
 bool WECommandReceived = false;
 
@@ -77,16 +59,9 @@ int lcntrlTimesWE[6];													  // contains ON and OFF time for the 3 zone p
 char cntrlTimesWD[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"}; //  how big is each array element? 6 elements each element 10 characters long (9 + 1 for /0)
 char cntrlTimesWE[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"};
 
-// Contoller specific MQTT topics
-// const char *oh3CommandWDTimes = "/house/cntrl/outside-lights-front/wd-control-times"; // Times received from either UI or Python app
-// const char *oh3CommandWETimes = "/house/cntrl/outside-lights-front/we-control-times"; // Times received from either UI or MySQL via Python app
-// const char *oh3StateRuntime   = "/house/cntrl/outside-lights-front/runtime-state";	  // published state: ON, OFF, and AUTO
-// const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";		  // Status of the Manual control switch control MAN or AUTO
-// const char *oh3CmdStateWD       = "/house/cntrl/outside-lights-front/wd-command";	  // UI Button press
-// const char *oh3CmdStateWE       = "/house/cntrl/outside-lights-front/we-command";     // UI Button press
 
-cntrlState cntrlStateWD(AUTOMODE, SBUNKOWN, ZONEGAP);
-cntrlState cntrlStateWE(AUTOMODE, SBUNKOWN, ZONEGAP);
+extern cntrlState cntrlStateWD;
+extern cntrlState cntrlStateWE;
 
 void startCntrl()
 {
@@ -172,7 +147,8 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	{
 		mqttLog("WD Control times Received", true, true);
 		processCrtlTimes(mqtt_payload, cntrlTimesWD, lcntrlTimesWD);
-		TimesReceivedWD = true;
+		
+		cntrlStateWD.setCntrlTimesReceived(true);
 		return true;
 	}
 	/****************************************************
@@ -183,7 +159,8 @@ bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMess
 	{
 		mqttLog("WE Control times Received", true, true);
 		processCrtlTimes(mqtt_payload, cntrlTimesWE, lcntrlTimesWE);
-		TimesReceivedWE = true;
+		
+		cntrlStateWE.setCntrlTimesReceived(true);
 		return true;
 	}
 	/************************************************************************
@@ -437,22 +414,13 @@ bool onORoff()
  */
 bool readyCheck()
 {
-	if (ohTODReceived == true && TimesReceivedWD == true && TimesReceivedWE == true)
+	if (ohTODReceived == true && cntrlStateWD.getCntrlTimesReceived() == true && cntrlStateWE.getCntrlTimesReceived() == true)
 	{
 		// mqttLog("readyCheck = true", true, true);
 		return true;
 	}
 	else
 	{
-		// mqttLog("readyCheck = false...", true, true);
-
-		// if (ohTODReceived == false)
-		//	mqttLog("TOD not received", true, true);
-		// if (TimesReceivedWD == false)
-		//	mqttLog("WD Contol times not received", true, true);
-		// if (TimesReceivedWE == false)
-		//	mqttLog("WE Contol times not received", true, true);
-
 		return false;
 	}
 }
@@ -478,12 +446,6 @@ void debugPrint()
 // Subscribe to controler specific topics
 void cntrlMQTTTopicSubscribe()
 {
-
-	// mqttTopicsubscribe(oh3CommandWDTimes, 2);
-	// mqttTopicsubscribe(oh3CommandWETimes, 2);
-
-	// mqttTopicsubscribe(oh3CmdStateWD, 2);
-	// mqttTopicsubscribe(oh3CmdStateWE, 2);
 
 	mqttTopicsubscribe(cntrlStateWD.getCntrlTimesTopic().c_str(), 2);
 	mqttTopicsubscribe(cntrlStateWE.getCntrlTimesTopic().c_str(), 2);
@@ -581,7 +543,7 @@ bool timeReceivedChecker()
 {
 	char logString[MAX_LOGSTRING_LENGTH];
 
-	if (TimesReceivedWD == false || TimesReceivedWE == false || WDCommandReceived == false || WECommandReceived == false || ohTODReceived == false)
+	if (cntrlStateWD.getCntrlTimesReceived() == false || cntrlStateWE.getCntrlTimesReceived() == false || WDCommandReceived == false || WECommandReceived == false || ohTODReceived == false)
 	{
 		memset(logString, 0, sizeof logString);
 		sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Waiting for all initialisation messages to be received");
@@ -593,13 +555,13 @@ bool timeReceivedChecker()
 			sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Time of Day not yet received");
 			mqttLog(logString, true, true);
 		}
-		if (TimesReceivedWD == false)
+		if (cntrlStateWD.getCntrlTimesReceived() == false)
 		{
 			memset(logString, 0, sizeof logString);
 			sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Weekday control times not yet received");
 			mqttLog(logString, true, true);
 		}
-		if (TimesReceivedWE == false)
+		if (cntrlStateWE.getCntrlTimesReceived() == false)
 		{
 			memset(logString, 0, sizeof logString);
 			sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Weekend control times not yet received");
@@ -617,7 +579,8 @@ bool timeReceivedChecker()
 			sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Weekend operating mode not yet received");
 			mqttLog(logString, true, true);
 		}
-		mqttClient.publish(oh3StateIOTRefresh, 1, true, "OLF");
+		// FIXTHIS ... WD and WE python returns both
+		mqttClient.publish(oh3StateIOTRefresh, 1, true, cntrlStateWD.getRefreshID().c_str());
 		return false;
 	}
 	else

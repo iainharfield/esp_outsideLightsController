@@ -19,7 +19,7 @@
 //FIXTHIS
 //#define AUTOMODE 0 // Normal running mode - Heating times are based on the 3 time zones
 //#define NEXTMODE 1 // Advances the control time to the next zone. FIX-THIS: Crap description
-#define ONMODE 2   // Permanently ON.  Heat is permanently requested. Zones times are ignored
+//#define ONMODE 2   // Permanently ON.  Heat is permanently requested. Zones times are ignored
 //#define OFFMODE 3  // Permanently OFF.  Heat is never requested. Zones times are ignore
 
 
@@ -54,8 +54,8 @@ extern char ntptod[MAX_CFGSTR_LENGTH];
 //*************************************
 // defined in cntrl.cpp
 //*************************************
-extern cntrlState cntrlStateWD;
-extern cntrlState cntrlStateWE;
+cntrlState cntrlStateWD;		// Create and set defaults
+cntrlState cntrlStateWE;		// Create and Set defaults
 
 
 #define WDCntlTimes  	"/house/cntrl/outside-lights-front/wd-control-times" // Times received from either UI or Python app
@@ -63,6 +63,7 @@ extern cntrlState cntrlStateWE;
 #define runtimeState    "/house/cntrl/outside-lights-front/runtime-state" 	 // published state: ON, OFF, and AUTO
 #define WDUICmdState 	"/house/cntrl/outside-lights-front/wd-command"		 // UI Button press received
 #define WEUICmdState 	"/house/cntrl/outside-lights-front/we-command"		 // UI Button press received
+#define RefreshID		"OLF"												 // the key send to Python app to refresh Cntroler state	
 
 #define DRD_TIMEOUT 3
 #define DRD_ADDRESS 0
@@ -136,10 +137,14 @@ void setup()
 	cntrlStateWD.setCntrlRunTimesStateTopic(runtimeState);
 	cntrlStateWD.setCntrlTimesTopic(WDCntlTimes);
 	cntrlStateWD.setUIcommandStateTopic(WDUICmdState);
+	cntrlStateWD.setRefreshID(RefreshID);
+
 	
 	cntrlStateWE.setCntrlRunTimesStateTopic(runtimeState);
 	cntrlStateWE.setCntrlTimesTopic(WECntlTimes);
 	cntrlStateWE.setUIcommandStateTopic(WEUICmdState);
+	cntrlStateWE.setRefreshID(RefreshID);
+
 	//startCntrl();
 
     // Platform setup: Set up and manage: WiFi, MQTT and Telnet
