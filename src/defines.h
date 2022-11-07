@@ -38,7 +38,6 @@
 #define REPORT_WARN 1
 #define REPORT_DEBUG 2
 
-
 //***************************************************************
 // Controller Specific MQTT Topics and config
 //***************************************************************
@@ -94,114 +93,12 @@ public:
   }
 };
 
-class cntrlState
-{
-  int runMode;
-  int switchBack;
-  int zone;
-  bool cntrlTimesReceived;
-  String refreshID;
-  String cntrlTimesTopic;
-  String UICmdTopic;
-  String CntrlRuntimeStateTopic;
-
-public:
-  cntrlState()
-  {
-    runMode = AUTOMODE;
-    switchBack = SBUNKOWN;
-    zone = ZONEGAP;
-    cntrlTimesReceived = false; 
-  }
-  cntrlState(int rm, int sb, int zn)
-  {
-    runMode = rm;
-    switchBack = sb;
-    zone = zn;
-    cntrlTimesReceived = false;
-  }
-  void setup(int rm, int sb, int zn)
-  {
-    runMode = rm;
-    switchBack = sb;
-    zone = zn;
-    cntrlTimesReceived = false;
-  }
-  int getRunMode()
-  {
-    return runMode;
-  }
-  int getSwitchBack()
-  {
-    return switchBack;
-  }
-  int getZone()
-  {
-    return zone;
-  }
-  void setRunMode(int rm)
-  {
-    runMode = rm;
-  }
-  void setSwitchBack(int sb)
-  {
-    switchBack = sb;
-  }
-  void setZone(int zn)
-  {
-    zone = zn;
-  }
-  void setCntrlTimesTopic(String timesTopic)
-  {
-    cntrlTimesTopic = timesTopic;
-  }
-  void setUIcommandStateTopic(String UIcmdTopic)
-  {
-    UICmdTopic = UIcmdTopic;
-  }
-  void setCntrlRunTimesStateTopic(String runtimeState)
-  {
-    CntrlRuntimeStateTopic = runtimeState;
-  }
-  void setCntrlTimesReceived(bool ctr)
-  {
-    cntrlTimesReceived = ctr;
-  }
-  void setRefreshID(String rID)
-  {
-    refreshID = rID;
-  }
-  String getRefreshID()
-  {
-    return refreshID;
-  }
-  bool getCntrlTimesReceived()
-  {
-    return cntrlTimesReceived;
-  }
-  String getCntrlTimesTopic()
-  {
-    return cntrlTimesTopic;
-  }
-  String getCntrlRunTimesStateTopic()
-  {
-    return CntrlRuntimeStateTopic;
-  }
-  String getUIcommandStateTopic()
-  {
-    return UICmdTopic  ;
-  }
-};
-
-
 class templateServices
 {
   bool weekDay = false; // initialise FIXTHIS
   int dayNumber;
-  int timeNow;
-  char cntrlTimesWD[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"}; //  how big is each array element? 6 elements each element 10 characters long (9 + 1 for /0)
-  char cntrlTimesWE[6][10]{"0000", "0100", "0200", "0300", "0400", "0600"};
-
+  int timeNow = 0;
+  bool ohTODReceived = false;
 
 public:
   templateServices() {}
@@ -213,7 +110,7 @@ public:
     else
       weekDay = false;
   }
-  void setup( int dn)
+  void setup(int dn)
   {
     dayNumber = dn;
   }
@@ -225,9 +122,25 @@ public:
     else
       weekDay = false;
   }
+  void setTimeNow( int tn)
+  {
+    timeNow = tn;
+  }
+  void setOHTODReceived( bool ohtod)
+  {
+    ohTODReceived = ohtod;
+  }
   bool getWeekDayState()
   {
     return weekDay;
+  }
+  int getTimeNow()
+  {
+    return timeNow;
+  }
+  bool getOHTODReceived()
+  {
+    return ohTODReceived;
   }
 };
 

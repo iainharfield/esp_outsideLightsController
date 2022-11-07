@@ -4,6 +4,11 @@
 #include <ArduinoOTA.h>
 #include <Ticker.h>
 #include <time.h>
+
+#include "defines.h"
+#include "utilities.h"
+#include "cntrl2.h"
+
 #include <AsyncMqttClient_Generic.hpp>
 
 #define ESP8266_DRD_USE_RTC true
@@ -13,31 +18,26 @@
 #define DOUBLERESETDETECTOR_DEBUG true
 #include <ESP_DoubleResetDetector.h>
 
-#include "defines.h"
-#include "utilities.h"
 
-//FIXTHIS
-//#define AUTOMODE 0 // Normal running mode - Heating times are based on the 3 time zones
-//#define NEXTMODE 1 // Advances the control time to the next zone. FIX-THIS: Crap description
-//#define ONMODE 2   // Permanently ON.  Heat is permanently requested. Zones times are ignored
-//#define OFFMODE 3  // Permanently OFF.  Heat is never requested. Zones times are ignore
 
 
 //***********************
 // Template functions
 //***********************
 bool onMqttMessageAppExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
+bool onMqttMessageCntrlExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
 void appMQTTTopicSubscribe();
 void telnet_extension_1(char);
 void telnet_extension_2(char);
 void telnet_extensionHelp(char);
-bool timeReceivedChecker(); 
-void app_WD_on();
-void app_WE_off();
-void app_WD_on();
-void app_WE_off();
-void app_WD_auto();
-void app_WE_auto();
+void startTimesReceivedChecker(); 
+void processCntrlTOD_Ext();
+void app_WD_on(String);
+void app_WE_off(String);
+void app_WD_on(String);
+void app_WE_off(String);
+void app_WD_auto(String);
+void app_WE_auto(String);
 
 //*************************************
 // defined in asyncConnect.cpp
@@ -54,8 +54,7 @@ extern char ntptod[MAX_CFGSTR_LENGTH];
 //*************************************
 // defined in cntrl.cpp
 //*************************************
-cntrlState cntrlStateWD;		// Create and set defaults
-cntrlState cntrlStateWE;		// Create and Set defaults
+cntrlState cntrlStateOLF;		// Create and set defaults
 
 
 #define WDCntlTimes  	"/house/cntrl/outside-lights-front/wd-control-times" // Times received from either UI or Python app
@@ -83,12 +82,12 @@ String deviceName      	= "outside-lights-front";
 String deviceType      	= "CNTRL";
 String app_id			= "OLF";						// configure
 
-int relay_pin       = D1;		    // wemos D1. LIght on or off (Garden lights)
+int relay_pin = D1;					// wemos D1. LIght on or off (Garden lights)
 int relay_pin_pir   = D2;	        // wemos D2. LIght on or off (Garage Path)
 int OLFManualStatus = D3;           // Manual over ride.  If low then lights held on manually
 int LIGHTSON        = 0;
 int LIGHTSOFF       = 1;
-int LIGHTSAUTO      = 3;
+int LIGHTSAUTO      = 3;			// Not using this at the moment
 
 bool bManMode       = false; // true = Manual, false = automatic
 
@@ -108,7 +107,6 @@ devConfig espDevice;
 
 Ticker configurationTimesReceived;
 bool timesReceived;
-
 
 
 void setup()
@@ -133,17 +131,11 @@ void setup()
 
 	// this app is a contoller
 	// configure the MQTT topics for the Controller
-	
-	cntrlStateWD.setCntrlRunTimesStateTopic(runtimeState);
-	cntrlStateWD.setCntrlTimesTopic(WDCntlTimes);
-	cntrlStateWD.setUIcommandStateTopic(WDUICmdState);
-	cntrlStateWD.setRefreshID(RefreshID);
+	cntrlStateOLF.setCntrlName((String) app_id);
+	cntrlStateOLF.setRefreshID(RefreshID);
+
 
 	
-	cntrlStateWE.setCntrlRunTimesStateTopic(runtimeState);
-	cntrlStateWE.setCntrlTimesTopic(WECntlTimes);
-	cntrlStateWE.setUIcommandStateTopic(WEUICmdState);
-	cntrlStateWE.setRefreshID(RefreshID);
 
 	//startCntrl();
 
@@ -160,7 +152,7 @@ void setup()
 	digitalWrite(relay_pin, LIGHTSOFF);
 	digitalWrite(relay_pin_pir, LIGHTSOFF);
 
-    configurationTimesReceived.attach(30, timeReceivedChecker); 
+    configurationTimesReceived.attach(30, startTimesReceivedChecker); 
 
 
 	
@@ -185,7 +177,7 @@ void loop()
 		        sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Outside Lights Manually Held ON");
 		        mqttLog(logString, true, true);
 
-				app_WD_on();  // FIXTHIS WD or WE
+				app_WD_on(app_id);  // FIXTHIS WD or WE
                 mqttClient.publish(oh3StateManual, 1, true, "MAN");
 	}
 	else
@@ -269,41 +261,80 @@ bool processCntrlMessageApp_Ext(char *mqttMessage, const char *onMessage, const 
 	}
 	return false;
 }
-
-
+//***************************************************
+// Connected to MQTT Broker 
 // Subscribe to application specific topics
+//***************************************************
 void appMQTTTopicSubscribe()
 {	
 
-	mqttTopicsubscribe(oh3CommandTrigger, 2);
+    mqttTopicsubscribe(oh3CommandTrigger, 2);
+
+	cntrlStateOLF.setWDCntrlTimesTopic(WDCntlTimes);
+	cntrlStateOLF.setWDUIcommandStateTopic(WDUICmdState);
+	cntrlStateOLF.setWDCntrlRunTimesStateTopic(runtimeState);
+
+	cntrlStateOLF.setWECntrlTimesTopic(WECntlTimes);
+	cntrlStateOLF.setWEUIcommandStateTopic(WEUICmdState);
+	cntrlStateOLF.setWECntrlRunTimesStateTopic(runtimeState);
 }
 
-void app_WD_on()
+void app_WD_on(String cid)
 {
 	digitalWrite(relay_pin, LIGHTSON);
 	
 }
 
-void app_WD_off()
+void app_WD_off(String cid)
 {
 	digitalWrite(relay_pin, LIGHTSOFF);
 }
 
-void app_WE_on()
+void app_WE_on(String cid)
 {
 	digitalWrite(relay_pin, LIGHTSON);
 }
 
-void app_WE_off()
+void app_WE_off(String cid)
 {
 	digitalWrite(relay_pin, LIGHTSOFF);	
 }
-void app_WD_auto()
+void app_WD_auto(String cid)
 {
 
 }
 
-void app_WE_auto()
+void app_WE_auto(String cid)
 {
 	
+}
+
+void startTimesReceivedChecker()
+{
+    cntrlStateOLF.runTimeReceivedCheck(); 
+}
+
+void processCntrlTOD_Ext()
+{
+	cntrlStateOLF.processCntrlTOD_Ext();
+}
+void telnet_extension_1(char c)
+{
+	cntrlStateOLF.telnet_extension_1(c);
+}
+// Process any application specific telnet commannds
+void telnet_extension_2(char c)
+{
+	printTelnet((String)c);
+}
+
+// Process any application specific telnet commannds
+void telnet_extensionHelp(char c)
+{
+	printTelnet((String) "x\t\tSome description");
+}
+
+bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMessageProperties &properties, const size_t &len, const size_t &index, const size_t &total)
+{
+	return cntrlStateOLF.onMqttMessageCntrlExt(topic, payload, properties, len, index, total);
 }

@@ -59,7 +59,6 @@ extern bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClien
 extern bool onMqttMessageCntrlExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
 
 extern void appMQTTTopicSubscribe();
-extern void cntrlMQTTTopicSubscribe();
 extern void processAppTOD_Ext();
 extern void processCntrlTOD_Ext();
 
@@ -98,6 +97,7 @@ int dayNum = -1; // 0=Sun 1=Mon, 2=Tue 3=Wed, 4=Thu 5=Fri, 6=Sat
 // bool weekDay = true;
 int ohTimenow = 0;   //1234 mans 12:34
 
+
 // wifi server config
 // Set up LittleFS
 #define FileFS LittleFS
@@ -117,10 +117,12 @@ String Router_Pass;
 
 char ipAddr[MAX_CFGSTR_LENGTH];
 
-templateServices coreServices(false); // initialise
+templateServices coreServices(false); // Create
 
 void platform_setup(bool configWiFi)
 {
+  coreServices.setTimeNow(0);
+
   // Serial.println(ASYNC_MQTT_GENERIC_VERSION);
   uint16_t int_mqttBrokerPort;
 
@@ -322,7 +324,7 @@ mqttLog(willTopic, true, true);
   // this function must be imlemented by the application
   //**********************************************************
 
-  cntrlMQTTTopicSubscribe();
+  //cntrlMQTTTopicSubscribe();
   appMQTTTopicSubscribe();
 }
 
@@ -417,9 +419,13 @@ void onMqttMessage(char *topic, char *payload, const AsyncMqttClientMessagePrope
     sscanf(mqtt_payload, "%d-%d-%dT%d:%d:%d", &year, &month, &day, &hr, &min, &sec);
     timeNow[0] = hr;
     timeNow[1] = min;
+    //FIX This remove next line when done
     ohTimenow = (timeNow[0] * 100) + timeNow[1];
+    coreServices.setTimeNow((timeNow[0] * 100) + timeNow[1]);
 
+    //FIXTHIS: remove next line when done 
     ohTODReceived = true;
+    coreServices.setOHTODReceived(true);
 
     // Notify Controller and Application that TOD has been received
     processTOD.once(2, processCntrlTOD_Ext);
