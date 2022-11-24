@@ -183,7 +183,8 @@ void loop()
 	else
 	{
 		bManMode = false;
-				// client.publish(outTopicOLFManual, "AUTO");
+		//mqttClient.publish(oh3StateManual, 1, true, "AUTO"); //FIXTHIS  I thing we cant assume auto - need to get state prior
+				
 			//	if (TODReceived == true)
 			//		processState();
 	}
