@@ -82,7 +82,7 @@ String deviceName      	= "outside-lights-front";
 String deviceType      	= "CNTRL";
 String app_id			= "OLF";						// configure
 
-int relay_pin = D1;					// wemos D1. LIght on or off (Garden lights)
+int relay_pin 		= D1;			// wemos D1. LIght on or off (Garden lights)
 int relay_pin_pir   = D2;	        // wemos D2. LIght on or off (Garage Path)
 int OLFManualStatus = D3;           // Manual over ride.  If low then lights held on manually
 int LIGHTSON        = 0;
@@ -217,6 +217,7 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 		if (strcmp(mqtt_payload, "PIRON") == 0)
 		{
 			digitalWrite(relay_pin_pir, LIGHTSON);	
+			digitalWrite(relay_pin, LIGHTSON);
             return true;
 		}
 
@@ -227,6 +228,7 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 				// Switch off unless manually held on by switch
 				if (bManMode != true)
 					digitalWrite(relay_pin_pir, LIGHTSOFF);	
+					digitalWrite(relay_pin, LIGHTSOFF);	
 			//}
             return true;
 		}
