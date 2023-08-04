@@ -186,20 +186,19 @@ void loop()
 bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessageProperties &properties, const size_t &len, const size_t &index, const size_t &total)
 {
 	(void)payload;
-	// char logString[MAX_LOGSTRING_LENGTH];
 
 	char mqtt_payload[len + 1];
 	mqtt_payload[len] = '\0';
 	strncpy(mqtt_payload, payload, len);
 
-	// if (reporting == REPORT_DEBUG)
-	//{
-	mqttLog(mqtt_payload, true, true);
-	//}
+	if (reporting == REPORT_DEBUG)
+	{
+		mqttLog(mqtt_payload, true, true);
+	}
 
 	if (strcmp(topic, oh3CommandTrigger) == 0)
 	{
-		if (strcmp(mqtt_payload, "PIRON") == 0)
+		if (strcmp(mqtt_payload, "PIRON") == 0) // FIXTHIS: there are multiple PIR - tey are being treated the same
 		{
 			digitalWrite(relay_pin_pir, LIGHTSON);
 			digitalWrite(relay_pin, LIGHTSON);
@@ -208,8 +207,6 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 
 		if (strcmp(mqtt_payload, "PIROFF") == 0)
 		{
-			// if (cntrlStateWD.getRunMode() != ONMODE && cntrlStateWE.getRunMode() != ONMODE)
-			//{
 			//  Switch off unless manually held on by switch
 			if (bManMode != true)
 			{ // FIXTHIS - Both off ?
@@ -219,20 +216,7 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 			//}
 			return true;
 		}
-		/*else
-		{
-			memset(logString, 0, sizeof logString);
-			sprintf(logString, "%s%s %s", "Unknown PIR Command received: ", topic, mqtt_payload);
-			mqttLog(logString, true, true);
-			return true;
-		} */
 	}
-	/*else
-	{
-			memset(logString, 0, sizeof logString);
-			sprintf(logString, "%s%s %s", "Unknown Command received by App: ", topic, mqtt_payload);
-			mqttLog(logString, true, true);
-	}*/
 	return false;
 }
 
@@ -333,7 +317,15 @@ void telnet_extension_1(char c)
 // Process any application specific telnet commannds
 void telnet_extension_2(char c)
 {
-	printTelnet((String)c);
+	//printTelnet((String)c);
+	if (bManMode == true)
+	{
+		printTelnet((String) "MANual mode:\tON");
+	}
+	else
+	{
+		printTelnet((String) "MANual mode:\tOFF");
+	}
 }
 
 // Process any application specific telnet commannds
