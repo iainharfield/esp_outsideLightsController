@@ -45,6 +45,7 @@
 #define NEXTMODE 1 // Advances the control time to the next zone. FIX-THIS: Crap description
 #define ONMODE 2   // Permanently ON.  Heat is permanently requested. Zones times are ignored
 #define OFFMODE 3  // Permanently OFF.  Heat is never requested. Zones times are ignored
+#define UNKNOWNMODE 4 // set at start up 
 
 #define SBUNKOWN 0
 #define SBON 1
