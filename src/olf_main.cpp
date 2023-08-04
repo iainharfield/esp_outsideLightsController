@@ -317,7 +317,6 @@ void telnet_extension_1(char c)
 // Process any application specific telnet commannds
 void telnet_extension_2(char c)
 {
-	//printTelnet((String)c);
 	if (bManMode == true)
 	{
 		printTelnet((String) "MANual mode:\tON");
