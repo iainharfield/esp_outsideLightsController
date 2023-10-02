@@ -5,9 +5,9 @@
 #include <Ticker.h>
 #include <time.h>
 
-#include "defines.h"
-#include "utilities.h"
-#include "cntrl2.h"
+#include "hh_defines.h"
+#include "hh_utilities.h"
+#include "hh_cntrl.h"
 
 #include <AsyncMqttClient_Generic.hpp>
 
@@ -22,7 +22,7 @@
 // Template functions
 //***********************
 bool onMqttMessageAppExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
-bool onMqttMessageCntrlExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
+bool onMqttMessageAppCntrlExt(char *, char *, const AsyncMqttClientMessageProperties &, const size_t &, const size_t &, const size_t &);
 void appMQTTTopicSubscribe();
 void telnet_extension_1(char);
 void telnet_extension_2(char);
@@ -47,6 +47,7 @@ extern AsyncMqttClient mqttClient;
 extern void wifiSetupConfig(bool);
 extern templateServices coreServices;
 extern char ntptod[MAX_CFGSTR_LENGTH];
+//extern bool mqttLog(const char* msg, byte recordType, bool mqtt, bool monitor);
 
 //*************************************
 // defined in cntrl.cpp
@@ -163,7 +164,7 @@ void loop()
 		bManMode = true;
 		memset(logString, 0, sizeof logString);
 		sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Outside Lights Manually Held ON");
-		mqttLog(logString, true, true);
+		mqttLog(logString, REPORT_WARN, true, true);
 
 		app_WD_on(&cntrlStateOLF); // FIXTHIS WD or WE
 		mqttClient.publish(oh3StateManual, 1, true, "MAN");
@@ -191,10 +192,7 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 	mqtt_payload[len] = '\0';
 	strncpy(mqtt_payload, payload, len);
 
-	if (reporting == REPORT_DEBUG)
-	{
-		mqttLog(mqtt_payload, true, true);
-	}
+	mqttLog(mqtt_payload, REPORT_DEBUG, true, true);
 
 	if (strcmp(topic, oh3CommandTrigger) == 0)
 	{
@@ -222,7 +220,7 @@ bool onMqttMessageAppExt(char *topic, char *payload, const AsyncMqttClientMessag
 
 void processAppTOD_Ext()
 {
-	mqttLog("OLF Application Processing TOD", true, true);
+	mqttLog("OLF Application Processing TOD", REPORT_INFO, true, true);
 }
 
 bool processCntrlMessageApp_Ext(char *mqttMessage, const char *onMessage, const char *offMessage, const char *commandTopic)
@@ -258,7 +256,7 @@ void app_WD_on(void *cid)
 
 	cntrlState *obj = (cntrlState *)cid;
 	String msg = obj->getCntrlName() + " WD ON";
-	mqttLog(msg.c_str(), true, true);
+	mqttLog(msg.c_str(), REPORT_INFO, true, true);
 }
 
 void app_WD_off(void *cid)
@@ -267,7 +265,7 @@ void app_WD_off(void *cid)
 
 	cntrlState *obj = (cntrlState *)cid;
 	String msg = obj->getCntrlName() + " WD OFF";
-	mqttLog(msg.c_str(), true, true);
+	mqttLog(msg.c_str(), REPORT_INFO, true, true);
 }
 
 void app_WE_on(void *cid)
@@ -276,7 +274,7 @@ void app_WE_on(void *cid)
 
 	cntrlState *obj = (cntrlState *)cid;
 	String msg = obj->getCntrlName() + " WE ON";
-	mqttLog(msg.c_str(), true, true);
+	mqttLog(msg.c_str(), REPORT_INFO, true, true);
 }
 
 void app_WE_off(void *cid)
@@ -285,20 +283,20 @@ void app_WE_off(void *cid)
 
 	cntrlState *obj = (cntrlState *)cid;
 	String msg = obj->getCntrlName() + " WE OFF";
-	mqttLog(msg.c_str(), true, true);
+	mqttLog(msg.c_str(), REPORT_INFO, true, true);
 }
 void app_WD_auto(void *cid)
 {
 	cntrlState *obj = (cntrlState *)cid;
 	String msg = obj->getCntrlName() + " WD AUTO";
-	mqttLog(msg.c_str(), true, true);
+	mqttLog(msg.c_str(), REPORT_INFO, true, true);
 }
 
 void app_WE_auto(void *cid)
 {
 	cntrlState *obj = (cntrlState *)cid;
 	String msg = obj->getCntrlName() + " WE AUTO";
-	mqttLog(msg.c_str(), true, true);
+	mqttLog(msg.c_str(), REPORT_INFO, true, true);
 }
 
 void startTimesReceivedChecker()
@@ -333,7 +331,7 @@ void telnet_extensionHelp(char c)
 	printTelnet((String) "x\t\tSome description");
 }
 
-bool onMqttMessageCntrlExt(char *topic, char *payload, const AsyncMqttClientMessageProperties &properties, const size_t &len, const size_t &index, const size_t &total)
+bool onMqttMessageAppCntrlExt(char *topic, char *payload, const AsyncMqttClientMessageProperties &properties, const size_t &len, const size_t &index, const size_t &total)
 {
 	return cntrlStateOLF.onMqttMessageCntrlExt(topic, payload, properties, len, index, total);
 }
