@@ -252,51 +252,108 @@ void appMQTTTopicSubscribe()
 
 void app_WD_on(void *cid)
 {
-	digitalWrite(relay_pin, LIGHTSON);
-
+	String msg;
 	cntrlState *obj = (cntrlState *)cid;
-	String msg = obj->getCntrlName() + " WD ON";
-	mqttLog(msg.c_str(), REPORT_INFO, true, true);
+
+	if (coreServices.getWeekDayState() == 1)			// 1 means weekday
+	{
+		digitalWrite(relay_pin, LIGHTSON);
+		msg = obj->getCntrlName() + ", WD ON";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
+	else
+	{
+	    msg = obj->getCntrlName() + ", WD ON : Do nothing as it's the weekend.";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
 }
 
 void app_WD_off(void *cid)
 {
-	digitalWrite(relay_pin, LIGHTSOFF);
-
+	String msg;
 	cntrlState *obj = (cntrlState *)cid;
-	String msg = obj->getCntrlName() + " WD OFF";
-	mqttLog(msg.c_str(), REPORT_INFO, true, true);
+
+	if (coreServices.getWeekDayState() == 1)			// 1 means weekday
+	{
+		digitalWrite(relay_pin, LIGHTSOFF);
+		msg = obj->getCntrlName() + ", WD OFF";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
+	else
+	{
+	    msg = obj->getCntrlName() + ", WD OFF : Do nothing as it's the weekend.";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
 }
 
 void app_WE_on(void *cid)
 {
-	digitalWrite(relay_pin, LIGHTSON);
-
+	String msg;
 	cntrlState *obj = (cntrlState *)cid;
-	String msg = obj->getCntrlName() + " WE ON";
-	mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	
+	if (coreServices.getWeekDayState() == 0)			// 0 means weekend
+	{
+		digitalWrite(relay_pin, LIGHTSON);
+		String msg = obj->getCntrlName() + ", WE ON";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
+	else	
+	{
+	    msg = obj->getCntrlName() + ", WE ON : Do nothing as its a week day.";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
 }
 
 void app_WE_off(void *cid)
 {
-	digitalWrite(relay_pin, LIGHTSOFF);
-
+	String msg;
 	cntrlState *obj = (cntrlState *)cid;
-	String msg = obj->getCntrlName() + " WE OFF";
-	mqttLog(msg.c_str(), REPORT_INFO, true, true);
+
+	if (coreServices.getWeekDayState() == 0)			// 0 means weekend
+	{
+		digitalWrite(relay_pin, LIGHTSOFF);
+		String msg = obj->getCntrlName() + ", WE OFF";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
+	else
+	{
+	    msg = obj->getCntrlName() + ", WE OFF : Do nothing as its a week day.";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
 }
 void app_WD_auto(void *cid)
 {
-	cntrlState *obj = (cntrlState *)cid;
-	String msg = obj->getCntrlName() + " WD AUTO";
-	mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	String msg;
+	cntrlState *obj = (cntrlState *)cid;	
+	
+	if (coreServices.getWeekDayState() == 1)			// 1 means weekday
+	{
+		msg = obj->getCntrlName() + ", WD AUTO";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
+	else
+	{
+	    msg = obj->getCntrlName() + ", WD AUTO : Do nothing as it's the weekend.";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
+
 }
 
 void app_WE_auto(void *cid)
 {
+	String msg;
 	cntrlState *obj = (cntrlState *)cid;
-	String msg = obj->getCntrlName() + " WE AUTO";
-	mqttLog(msg.c_str(), REPORT_INFO, true, true);
+
+	if (coreServices.getWeekDayState() == 0)			// 0 means weekend
+	{
+		msg = obj->getCntrlName() + ", WE AUTO";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
+	else
+	{
+	    msg = obj->getCntrlName() + ", WE AUTO : Do nothing as its a week day.";
+		mqttLog(msg.c_str(), REPORT_INFO, true, true);
+	}
 }
 
 void startTimesReceivedChecker()
