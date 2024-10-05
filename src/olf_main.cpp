@@ -76,21 +76,21 @@ extern bool telnetReporting;
 // Application specific
 //
 
-String deviceName = "outside-lights-front";
-String deviceType = "CNTRL";
-String app_id = "OLF"; // configure
+String deviceName 	= "outside-lights-front";
+String deviceType 	= "CNTRL";
+String app_id 		= "OLF"; 	// configure
 
-int relay_pin = D1;		  // wemos D1. LIght on or off (Garden lights)
-int relay_pin_pir = D2;	  // wemos D2. LIght on or off (Garage Path)
-int OLFManualStatus = D3; // Manual over ride.  If low then lights held on manually
-int LIGHTSON = 0;
-int LIGHTSOFF = 1;
-int LIGHTSAUTO = 3; // Not using this at the moment
+int relay_pin 		= D1;		// wemos D1. LIght on or off (Garden lights)
+int relay_pin_pir 	= D2;		// wemos D2. LIght on or off (Garage Path)
+int OLFManualStatus = D3; 		// Manual over ride.  If low then lights held on manually
+int LIGHTSON 		= 0;
+int LIGHTSOFF 		= 1;
+int LIGHTSAUTO 		= 3; 		// Not using this at the moment
 
-bool bManMode = false; // true = Manual, false = automatic
+bool bManMode = false; 			// true = Manual, false = automatic
 
-const char *oh3CommandTrigger = "/house/cntrl/outside-lights-front/pir-command"; // Event fron the PIR detector (front porch: PIRON or PIROFF
-const char *oh3StateManual = "/house/cntrl/outside-lights-front/manual-state";	 // 	Status of the Manual control switch control MAN or AUTO
+const char *oh3CommandTrigger 	= "/house/cntrl/outside-lights-front/pir-command"; // Event fron the PIR detector (front porch: PIRON or PIROFF
+const char *oh3StateManual 		= "/house/cntrl/outside-lights-front/manual-state";	 // 	Status of the Manual control switch control MAN or AUTO
 
 //************************
 // Application specific
@@ -99,7 +99,6 @@ bool processCntrlMessageApp_Ext(char *, const char *, const char *, const char *
 void processAppTOD_Ext();
 
 devConfig espDevice;
-// runState cntrlState;
 
 Ticker configurationTimesReceived;
 bool timesReceived;
@@ -115,7 +114,7 @@ void setup()
 		delay(300);
 
 	espDevice.setup(deviceName, deviceType);
-	Serial.println("\nStarting Outside lights Controller on ");
+	Serial.println("\nStarting Outside Lights Front Controller on ");
 	Serial.println(ARDUINO_BOARD);
 
 	drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
@@ -164,7 +163,7 @@ void loop()
 	{
 		bManMode = true;
 		memset(logString, 0, sizeof logString);
-		sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Outside Lights Manually Held ON");
+		sprintf(logString, "%s,%s,%s,%s", ntptod, espDevice.getType().c_str(), espDevice.getName().c_str(), "Outside Lights Front manually held ON");
 		mqttLog(logString, REPORT_WARN, true, true);
 
 		app_WD_on(&cntrlStateOLF); // FIXTHIS WD or WE
@@ -174,9 +173,6 @@ void loop()
 	{
 		bManMode = false;
 		// mqttClient.publish(oh3StateManual, 1, true, "AUTO"); //FIXTHIS  I thing we cant assume auto - need to get state prior
-
-		//	if (TODReceived == true)
-		//		processState();
 	}
 }
 
@@ -256,7 +252,7 @@ void app_WD_on(void *cid)
 	String msg;
 	cntrlState *obj = (cntrlState *)cid;
 
-	if (coreServices.getWeekDayState() == 1)			// 1 means weekday
+	if (coreServices.getWeekDayState() == 1)			// 1 means weekday : FIXTHIS : Why am I making this test is it necessary? 
 	{
 		digitalWrite(relay_pin, LIGHTSON);
 		msg = obj->getCntrlName() + ", WD ON";
@@ -274,7 +270,7 @@ void app_WD_off(void *cid)
 	String msg;
 	cntrlState *obj = (cntrlState *)cid;
 
-	if (coreServices.getWeekDayState() == 1)			// 1 means weekday
+	if (coreServices.getWeekDayState() == 1)			// 1 means weekday : FIXTHIS : Why am I making this test is it necessary? 
 	{
 		digitalWrite(relay_pin, LIGHTSOFF);
 		msg = obj->getCntrlName() + ", WD OFF";
@@ -292,7 +288,7 @@ void app_WE_on(void *cid)
 	String msg;
 	cntrlState *obj = (cntrlState *)cid;
 	
-	if (coreServices.getWeekDayState() == 0)			// 0 means weekend
+	if (coreServices.getWeekDayState() == 0)			// 0 means weekend : FIXTHIS : Why am I making this test is it necessary? 
 	{
 		digitalWrite(relay_pin, LIGHTSON);
 		String msg = obj->getCntrlName() + ", WE ON";
@@ -310,7 +306,7 @@ void app_WE_off(void *cid)
 	String msg;
 	cntrlState *obj = (cntrlState *)cid;
 
-	if (coreServices.getWeekDayState() == 0)			// 0 means weekend
+	if (coreServices.getWeekDayState() == 0)			// 0 means weekend : FIXTHIS : Why am I making this test is it necessary? 
 	{
 		digitalWrite(relay_pin, LIGHTSOFF);
 		String msg = obj->getCntrlName() + ", WE OFF";
@@ -327,7 +323,7 @@ void app_WD_auto(void *cid)
 	String msg;
 	cntrlState *obj = (cntrlState *)cid;	
 	
-	if (coreServices.getWeekDayState() == 1)			// 1 means weekday
+	if (coreServices.getWeekDayState() == 1)			// 1 means weekday : : FIXTHIS : Why am I making this test is it necessary? 
 	{
 		msg = obj->getCntrlName() + ", WD AUTO";
 		mqttLog(msg.c_str(), REPORT_INFO, true, true);
@@ -345,7 +341,7 @@ void app_WE_auto(void *cid)
 	String msg;
 	cntrlState *obj = (cntrlState *)cid;
 
-	if (coreServices.getWeekDayState() == 0)			// 0 means weekend
+	if (coreServices.getWeekDayState() == 0)			// 0 means weekend : FIXTHIS : Why am I making this test is it necessary? 
 	{
 		msg = obj->getCntrlName() + ", WE AUTO";
 		mqttLog(msg.c_str(), REPORT_INFO, true, true);
