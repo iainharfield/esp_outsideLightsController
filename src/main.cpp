@@ -2,7 +2,8 @@
 // #include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <Ticker.h>
-#include <AsyncMqttClient_Generic.hpp>
+#include <AsyncMqttClient.h> 
+//#include <AsyncMqttClient_Generic.hpp>
 #include <time.h>
 
 #include "hh_defines.h"
@@ -11,6 +12,8 @@
 
 // Folling line added to stop compilation error suddenly occuring in 2024???
 #include "ESPAsyncDNSServer.h"
+
+#include <config.h>
 
 #define ESP8266_DRD_USE_RTC true
 #define ESP_DRD_USE_LITTLEFS false
@@ -30,12 +33,6 @@ void telnet_extension_2(char);
 void telnet_extensionHelp(char);
 void startTimesReceivedChecker();
 void processCntrlTOD_Ext();
-// void app_WD_on(String);
-// void app_WE_off(String);
-// void app_WD_on(String);
-// void app_WE_off(String);
-// void app_WD_auto(String);
-// void app_WE_auto(String);
 
 //*************************************
 // defined in asyncConnect.cpp
@@ -56,12 +53,12 @@ extern char ntptod[MAX_CFGSTR_LENGTH];
 extern cntrlState *cntrlObjRef; // pointer to cntrlStateOLF
 cntrlState cntrlStateOLF;		// Create and set defaults
 
-#define WDCntlTimes "/house/cntrl/outside-lights-front/wd-control-times" // Times received from either UI or Python app
-#define WECntlTimes "/house/cntrl/outside-lights-front/we-control-times" // Times received from either UI or MySQL via Python app
-#define runtimeState "/house/cntrl/outside-lights-front/runtime-state"	 // published state: ON, OFF, and AUTO
-#define WDUICmdState "/house/cntrl/outside-lights-front/wd-command"		 // UI Button press received
-#define WEUICmdState "/house/cntrl/outside-lights-front/we-command"		 // UI Button press received
-#define RefreshID "OLF"													 // the key send to Python app to refresh Cntroler state
+///#define WDCntlTimes "/house/cntrl/outside-lights-front/wd-control-times" // Times received from either UI or Python app
+///#define WECntlTimes "/house/cntrl/outside-lights-front/we-control-times" // Times received from either UI or MySQL via Python app
+///#define runtimeState "/house/cntrl/outside-lights-front/runtime-state"	 // published state: ON, OFF, and AUTO
+///#define WDUICmdState "/house/cntrl/outside-lights-front/wd-command"		 // UI Button press received
+///#define WEUICmdState "/house/cntrl/outside-lights-front/we-command"		 // UI Button press received
+///#define RefreshID "OLF"													 // the key send to Python app to refresh Cntroler state
 
 #define DRD_TIMEOUT 3
 #define DRD_ADDRESS 0
@@ -76,9 +73,9 @@ extern bool telnetReporting;
 // Application specific
 //
 
-String deviceName 	= "outside-lights-front";
-String deviceType 	= "CNTRL";
-String app_id 		= "OLF"; 	// configure
+///String deviceName 	= "outside-lights-front";
+///String deviceType 	= "CNTRL";
+///String app_id 		= "OLF"; 	// configure
 
 int relay_pin 		= D1;		// wemos D1. LIght on or off (Garden lights)
 int relay_pin_pir 	= D2;		// wemos D2. LIght on or off (Garage Path)
@@ -89,8 +86,8 @@ int LIGHTSAUTO 		= 3; 		// Not using this at the moment
 
 bool bManMode = false; 			// true = Manual, false = automatic
 
-const char *oh3CommandTrigger 	= "/house/cntrl/outside-lights-front/pir-command"; // Event fron the PIR detector (front porch: PIRON or PIROFF
-const char *oh3StateManual 		= "/house/cntrl/outside-lights-front/manual-state";	 // 	Status of the Manual control switch control MAN or AUTO
+///const char *oh3CommandTrigger 	= "/house/cntrl/outside-lights-front/pir-command"; // Event fron the PIR detector (front porch: PIRON or PIROFF
+///const char *oh3StateManual 		= "/house/cntrl/outside-lights-front/manual-state";	 // 	Status of the Manual control switch control MAN or AUTO
 
 //************************
 // Application specific
@@ -114,7 +111,8 @@ void setup()
 		delay(300);
 
 	espDevice.setup(deviceName, deviceType);
-	Serial.println("\nStarting Outside Lights Front Controller on ");
+	//Serial.println("\nStarting Outside Lights Front Controller on ");
+	Serial.println(StartUpMessage);
 	Serial.println(ARDUINO_BOARD);
 
 	drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
