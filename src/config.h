@@ -5,6 +5,7 @@
 #define runtimeState    "/house/cntrl/outside-lights-front/runtime-state"	 // published state: ON, OFF, and AUTO
 #define WDUICmdState    "/house/cntrl/outside-lights-front/wd-command"		 // UI Button press received
 #define WEUICmdState    "/house/cntrl/outside-lights-front/we-command"		 // UI Button press received
+#define LightState      "/house/cntrl/outside-lights-front/light-state"       // ON or OFF
 #define RefreshID       "OLF"	
 
 #define StartUpMessage  "/nStarting Outside Lights Front Controller on "
